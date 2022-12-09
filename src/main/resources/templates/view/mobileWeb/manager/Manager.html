@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layouts/DefaultLayout">
+
+<th:block layout:fragment="css">
+    <style>
+    </style>
+</th:block>
+
+<div layout:fragment="M_content" class="backgroundColor">
+    <header class="bg-dark py-5">
+        <div class="container"><!-- px-4 px-lg-5 my-5-->
+            <div class="text-center text-white">
+                <h1 class="display-4 fw-bolder" id="top">사용자 관리</h1>
+            </div>
+        </div>
+    </header>
+
+    <template>
+        <div style="text-align: left; font-size: x-large; color: #6a1a21; position: absolute">
+            <el-button @click="goMainHome" class="buttonCss" style="margin-left: 10px; background-color: antiquewhite">
+                <img src="/img/home.png" class="logoutCss">
+            </el-button>
+        </div>
+        <div style="text-align: right; font-size: x-large; color: #6a1a21;">
+            <img src="/img/manager.png" style="width: 43px; height: 40px; margin-right: 5px">
+            <span style="vertical-align: middle; margin-right: 10px">{{ pageData.managerDataOfSession }}</span>
+            <el-button @click="logout" class="buttonCss" style="margin-left: 10px; margin-right: 10px; background-color: antiquewhite">
+                <img src="/img/logout.png" class="logoutCss">
+            </el-button>
+        </div>
+        <hr style="margin-top: 0.2rem">
+        <div style="text-align: center">
+            <!-- 매니저 신규 등록 버튼-->
+            <div class="system-registration" style="text-align: right">
+                <el-button style="background-color: black; color: white; margin-bottom: 5px; margin-right: 5px" type="primary" @click="showCreate()">등록</el-button>
+            </div>
+
+            <!-- 매니저 테이블 -->
+            <div class="table-contents-wrap">
+                <el-table :data="pageData.managerList">
+                    <!--<el-table-column label="No." class-name="data-table-cell" label-class-name="data-table-header"
+                                     style="width:10%">
+                        <template slot-scope="scope">
+                            {{ pageData.count - ((pageData.searchData.pageNo - 1) * pageData.searchData.countPerPage) -
+                            scope.$index }}
+                        </template>
+                    </el-table-column>-->
+                    <el-table-column label="아이디" class-name="data-table-cell" label-class-name="data-table-header"
+                                     style="width:35%">
+                        <template slot-scope="scope">
+                            <el-link @click="view(scope.row.managerId)" style="color: #416DB0">{{ scope.row.managerId }}</el-link>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="managerNm" label="이름" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <el-table-column prop="managerPhone" label="휴대폰" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <el-table-column prop="managerTel" label="연락처" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <el-table-column prop="managerEmail" label="이메일" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <template v-if="pageData.rootRight">
+                        <el-table-column label="상태" class-name="data-table-cell" label-class-name="data-table-header"
+                                         style="width:35%">
+                            <template slot-scope="scope">
+                                <el-link @click="usingStatusChange(scope.row.managerId, scope.row.usingStatus)" style="color: #416DB0">{{ scope.row.usingStatus }}</el-link>
+                            </template>
+                        </el-table-column>
+                    </template>
+                </el-table>
+                <el-pagination small layout="prev, pager, next" :total="pageData.count"
+                               :page-size="pageData.searchData.countPerPage" :current-page.sync="pageData.searchData.pageNo"
+                               @current-change="mmlist">
+                </el-pagination>
+
+                <!-- 매니저 신규 등록 & 업데이트 팝업 -->
+                <div class="info-registration-title">
+                    <el-dialog width="30%" :visible.sync="pageData.dataDialogVisible" :close-on-click-modal=false center>
+                        <h3>
+                            매니저 정보
+                            <span>
+							<template v-if="pageData.isCreate">
+								신규 생성
+							</template>
+							<template v-else>
+								수정
+							</template>
+						</span>
+                        </h3>
+                        <div class="manager">
+                            <el-form ref="form" :model="pageData.manager" label-width="120px">
+                                <el-form-item label="아이디">
+                                    <el-input v-model="pageData.manager.managerId" v-bind:readonly="!pageData.isCreate" maxlength="50" show-word-limit>
+                                    </el-input>
+                                </el-form-item>
+
+                                <el-row>
+                                    <template v-if="pageData.isCreate">
+                                        <el-form-item label="비밀번호">
+                                            <el-input v-model="pageData.manager.managerPw" show-password maxlength="20" show-word-limit></el-input>
+                                        </el-form-item>
+                                        <el-form-item label="비밀번호 확인">
+                                            <el-input v-model="pageData.manager.confirmPw" show-password maxlength="20" show-word-limit></el-input>
+                                        </el-form-item>
+                                    </template>
+                                </el-row>
+
+                                <el-form-item label="이름">
+                                    <el-input v-model="pageData.manager.managerNm" maxlength="50" show-word-limit></el-input>
+                                </el-form-item>
+                                <el-form-item label="휴대폰">
+                                    <el-input type="text"
+                                              oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');"
+                                              v-model="pageData.manager.managerPhone" maxlength="20" show-word-limit></el-input>
+                                </el-form-item>
+                                <el-form-item label="연락처">
+                                    <el-input type="text"
+                                              oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');"
+                                              v-model="pageData.manager.managerTel" maxlength="20" show-word-limit></el-input>
+                                </el-form-item>
+                                <el-form-item label="이메일">
+                                          <!--:rules="[
+                                            { required: true, message: 'Please input email address', trigger: 'blur' },
+                                            { type: 'email', message: 'Please input correct email address', trigger: ['blur', 'change'] }
+                                          ]">-->
+                                    <el-input v-model="pageData.manager.managerEmail" maxlength="50" show-word-limit></el-input>
+                                </el-form-item>
+                            </el-form>
+                        </div>
+                        <div slot="footer" class="dialog-footer" style="text-align:center; margin-top: 30px">
+                            <el-button type="primary" @click="save()" class="save">저장</el-button>
+                            <template v-if="!pageData.isCreate">
+                                <el-button @click="managerDelete()" class="exit">삭제</el-button>
+                            </template>
+                            <el-button @click="pageData.dataDialogVisible=false, pageData.isCreate=false" class="exit">닫기</el-button>
+                        </div>
+                    </el-dialog>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
+<th:block layout:fragment="scriptBeforeCreateVue">
+    <script>
+        let basic = {
+            // create 수행 시 form에서 받아온 데이터를 저장할 변수
+            managerId: '',
+            managerPw: '',
+            managerNm: '',
+            managerPhone: '',
+            managerTel: '',
+            managerEmail: '',
+            confirmPw: '',
+            //using: false
+        }
+
+        let localData = {
+            managerDataOfSession: '',
+            manager: basic,
+            managerList: [],
+            count: 0,
+            searchData: {
+                pageNo: 1,
+                countPerPage: 4
+            },
+            isCreate: false,
+            dataDialogVisible: false,
+            rootRight: false
+        }
+
+        let localMethod = {
+            mmlist: function() { // 관리자 목록 테이블 가져오기
+                axiosGet("/api/system/manager/list", { params: this.pageData.searchData },
+                    function (response) {
+                        vueApp.pageData.managerList = response.data.list;
+                        vueApp.pageData.count = response.data.count;
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+            },
+            showCreate: function() { // 관리자 신규 등록 버튼 클릭
+                this.pageData.isCreate = true; // isCreate를 신규 등록으로 구분
+                this.pageData.manager = Object.assign({}, basic); // 데이터를 담을 변수 초기화
+                this.pageData.dataDialogVisible = true; // 팝업 ON 전환
+            },
+            save: function() { // 저장 버튼을 통해 실행될 작업을 create와 update로 구분하기 위한 지점
+                if(this.pageData.isCreate === true) { // create
+                    this.managerCreate();
+                } else { // update
+                    this.managerUpdate();
+                }
+            },
+            managerCreate: function() { // 관리자 신규 등록 실행
+                axiosPost("/api/system/manager/create/", vueApp.pageData.manager,
+                    function() {
+                        alert("등록되었습니다.");
+                        vueApp.pageData.isCreate = false;
+                        vueApp.pageData.dataDialogVisible = false;
+                        vueApp.mmlist();
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            view: function (managerId) { // 관리자 상세정보 팝업에 데이터 표시를 위해 클릭한 아이디의 데이터 가져오기
+                axiosPost("/api/system/manager/" + managerId, null,
+                    function (response) {
+                        vueApp.pageData.manager = response.data;
+                        vueApp.pageData.dataDialogVisible = true;
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            managerUpdate: function() { // 관리자 정보 업데이트 실행
+                axiosPut("/api/system/manager", vueApp.pageData.manager,
+                    function () {
+                        alert("수정되었습니다.");
+                        vueApp.pageData.dataDialogVisible = false;
+                        vueApp.mmlist();
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            managerDelete: function () {
+                if(this.pageData.rootRight === false) {
+                    alert("최고 권한의 관리자만 수행 가능한 기능입니다.");
+                    return false;
+                } else {
+                    if(confirm("관리자 [" + this.pageData.manager.managerId + "] 의 정보를 삭제하시곘습니까?") == true) {
+                        axiosDelete("/api/system/manager/managerDelete/" + vueApp.pageData.manager.managerId, null,
+                            function () {
+                                alert("삭제되었습니다.")
+                                vueApp.pageData.dataDialogVisible = false;
+                                vueApp.pageData.isCreate = false;
+                                vueApp.mmlist();
+                            }
+                        )
+                    } else {
+                        return false;
+                    }
+                }
+            },
+            usingStatusChange: function (managerId, usingStatus) { // using 상태 변경, (최고관리자 권한)
+                if(confirm("관리자 [" + managerId + "] 의 상태를 '대기중'으로 변경하시겠습니까?") == true) {
+                    if(usingStatus === '대기중') {
+                        alert("관리자 [" + managerId + "] 는 이미 대기중 상태입니다.")
+                    } else {
+                        axiosPut("/api/system/manager/usingStatusChange/" + managerId, null,
+                            function () {
+                                alert("관리자 [" + managerId + "] 의 상태가 대기중으로 변경되었습니다.");
+                                vueApp.mmlist();
+                            }
+                        )
+                    }
+                } else {
+                    return false;
+                }
+                this.resetLeftTime();
+            },
+
+            // ------------------------- vueMounted() -------------------------
+
+            managerIdOfSession: function () {
+                axiosGet("/api/system/manager", null,
+                    function (response) {
+                        vueApp.pageData.managerDataOfSession = response.data;
+                        if(vueApp.pageData.managerDataOfSession === 'root') {
+                            vueApp.pageData.rootRight = true;
+                        }
+                    }
+                )
+            }
+        }
+
+        function vueMounted() {
+            //this.workTimer();
+            this.managerIdOfSession();
+            this.mmlist();
+        }
+
+    </script>
+</th:block>
+<th:block layout:fragment="scriptAfterCreateVue">
+</th:block>
+</html>

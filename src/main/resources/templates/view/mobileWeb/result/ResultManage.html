@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layouts/DefaultLayout">
+
+<th:block layout:fragment="css">
+    <style>
+        .box {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+        .box::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera*/
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="M_content" class="backgroundColor">
+    <header class="bg-dark py-5">
+        <div class="container"> <!--px-4 px-lg-5 my-5-->
+            <div class="text-center text-white">
+                <h1 class="display-4 fw-bolder" id="top">진단 결과 관리</h1>
+            </div>
+        </div>
+    </header>
+
+    <template>
+        <div style="text-align: left; font-size: x-large; color: #6a1a21; position: absolute">
+            <el-button @click="goMainHome" class="buttonCss" style="margin-left: 10px; background-color: antiquewhite">
+                <img src="/img/home.png" class="logoutCss">
+            </el-button>
+        </div>
+        <div style="text-align: right; font-size: x-large; color: #6a1a21;">
+            <img src="/img/manager.png" style="width: 43px; height: 40px; margin-right: 5px">
+            <span style="vertical-align: middle; margin-right: 10px">{{ pageData.managerDataOfSession }}</span>
+            <el-button @click="logout" class="buttonCss" style="margin-left: 10px; margin-right: 10px; background-color: antiquewhite">
+                <img src="/img/logout.png" class="logoutCss">
+            </el-button>
+        </div>
+        <hr style="margin-top: 0.2rem">
+        <div style="text-align: center">
+            <!--고객 이름으로 테이블 검색-->
+            <div style="display: -webkit-box; margin-bottom: 5px; margin-left: 5px">
+                <div style="display: inline-block; width: 15vw">
+                    <el-input placeholder="이름" v-model="pageData.searchName" style="display: inline-block; vertical-align: middle" maxlength="50" show-word-limit></el-input>
+                </div>
+                <div style="display: inline-block; margin-left: 10px; width: 15vw; vertical-align: middle">
+                    <el-select v-model="pageData.searchMaker" @change="searchMakerCheck()">
+                        <el-option
+                                v-for="item in pageData.searchVarCodeSelectBox"
+                                :key="item.codevalue"
+                                :label="item.codelabel"
+                                :value="item.codevalue">
+                        </el-option>
+                    </el-select>
+                </div>
+                <template v-if="pageData.carModelShow">
+                    <div style="display: inline-block; margin-left: 10px; width: 15vw">
+                        <el-select v-model="pageData.searchModel">
+                            <el-option
+                                    v-for="item in pageData.searchVmlCodeSelectBox"
+                                    :key="item.codevalue"
+                                    :label="item.codelabel"
+                                    :value="item.codevalue">
+                            </el-option>
+                        </el-select>
+                    </div>
+                </template>
+                <el-button @click="search()" style="margin-left: 10px; vertical-align: middle">검색</el-button>
+            </div>
+
+            <!--등록된 고객 리스트-->
+            <div class="table-contents-wrap">
+                <el-table :data="pageData.resultList">
+                    <!--<el-table-column label="No." class-name="data-table-cell" label-class-name="data-table-header"
+                                     style="width:10%">
+                        <template slot-scope="scope">
+                            {{ pageData.count - ((pageData.searchData.pageNo - 1) * pageData.searchData.countPerPage) -
+                            scope.$index }}
+                        </template>
+                    </el-table-column>-->
+                    <el-table-column label="이름" class-name="data-table-cell" label-class-name="data-table-header"
+                                     style="width:35%">
+                        <template slot-scope="scope">
+                            <el-link @click="view(scope.row.testid)" style="color: #416DB0">{{ scope.row.customerName }}</el-link>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="carNumber" label="차량 번호" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <!--<el-table-column prop="carMaker" label="제조사" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>-->
+                    <el-table-column prop="carName" label="모델" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <el-table-column prop="soh" label="SoH" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <el-table-column prop="macAddress" label="진단기 ID(mac)" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <el-table-column prop="registDt" label="충전일시" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                </el-table>
+                <el-pagination small layout="prev, pager, next" :total="pageData.count"
+                               :page-size="pageData.searchData.countPerPage" :current-page.sync="pageData.searchData.pageNo"
+                               @current-change="tList">
+                </el-pagination>
+
+
+
+                <!-- Result 상세 팝업 -->
+                    <el-dialog class="el-dialogCustoerms" width="30%" :visible.sync="pageData.resultPopUp" :close-on-click-modal=false center>
+                        <template>
+                            <div style="text-align: center">
+                                <div class="info-registration-title2">
+                                    <div class="diagnosisStart">
+                                        <div>
+                                            <div class="manager" style="display: inline-block">
+                                                <el-form ref="form" :model="pageData.result" label-width="120px"><!-- style="overflow-y: auto;" class="box"-->
+                                                    <p style="color: crimson; font-size: x-large">기본 정보</p>
+                                                    <el-form-item label="차량번호" style="float: left; margin-right: 20px">
+                                                        <el-input v-model="pageData.result.carNumber" maxlength="20" readonly="readonly" show-word-limit></el-input>
+                                                    </el-form-item>
+                                                    <el-form-item label="제조사">
+                                                        <el-input v-model="pageData.result.varCodeNm" maxlength="20" readonly="readonly" show-word-limit></el-input>
+                                                    </el-form-item>
+                                                    <el-form-item label="모델" style="float: left; margin-right: 20px">
+                                                        <el-input v-model="pageData.result.vmlCodeNm" maxlength="20" readonly="readonly" show-word-limit></el-input>
+                                                    </el-form-item>
+                                                    <el-form-item label="연식">
+                                                        <el-input v-model="pageData.result.carYear" maxlength="20" readonly="readonly" show-word-limit></el-input>
+                                                    </el-form-item>
+                                                    <el-form-item label="주행거리" style="float: left">
+                                                        <el-input type="text"
+                                                                  oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');"
+                                                                  v-model="pageData.result.mileage" maxlength="11" style="display: inline-block" readonly="readonly" show-word-limit>
+                                                        </el-input>
+                                                    </el-form-item>
+                                                </el-form>
+                                                <br>
+                                            </div>
+                                            <div><!--style="display: inline-block"-->
+                                                <img id="vehicle" src="" style="width: 300px;"><!-- margin-left: 30px; position: absolute; top:20%-->
+                                            </div>
+                                        </div>
+
+                                        <div class="manager" style="margin-bottom: 5px">
+                                            <el-form ref="form" :model="pageData.result" label-width="120px"><!--style="overflow-y: auto;" class="box"-->
+                                                <p style="color: crimson; font-size: x-large">충전 정보</p>
+                                                <div>
+                                                    <div class="resultLayout" style="margin-left: 8vw">
+                                                        <el-form-item label="Health">
+                                                            <p style="color: green; font-size: x-large; margin-top: 5px">{{ pageData.result.soh }}</p>
+                                                        </el-form-item>
+                                                    </div>
+                                                    <div class="resultLayout">
+                                                        <el-form-item label="Rating">
+                                                            <p style="color: royalblue; font-size: xxx-large; margin-top: 5px">{{ pageData.result.grade }}</p>
+                                                        </el-form-item>
+                                                    </div>
+                                                    <div class="resultText" style="display: inline">
+                                                        <el-form-item label="(State of Health Of Car battery)" style="margin-top: 10px">
+                                                            <p style="font-size: 12px">
+                                                                SoH of a battery describes the difference between a battery being studied and a fresh bettery and considers cell
+                                                            </p>
+                                                        </el-form-item>
+                                                        <el-form-item label="Rating Explanation">
+                                                            <p style="font-size: 15px">
+                                                                S : 96% ~ 100%, A : 91% ~ 95%, B : 86% ~ 90%<br>
+                                                                C : 81% ~ 85%, D : Below 80%
+                                                            </p>
+                                                        </el-form-item>
+                                                    </div>
+                                                </div>
+                                            </el-form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        <div slot="footer" class="dialog-footer" style="text-align:center">
+                            <!--<el-button type="primary" @click="save()" class="save">Save</el-button>-->
+                            <el-button @click="pageData.resultPopUp=false, pageData.result={}, pageData.carImgSearchData={}, pageData.imgName=''" class="exit">닫기</el-button>
+                        </div>
+                    </el-dialog>
+            </div>
+        </div>
+    </template>
+</div>
+
+<th:block layout:fragment="scriptBeforeCreateVue">
+    <script>
+        let localData = {
+            managerDataOfSession: '', // 현재 세션의 관리자 아이디
+            resultList: [], // 리스트
+            result: {}, // 상세정보
+            count: 0, // 고객 테이블 페이징
+            searchData: { // 고객 테이블
+                pageNo: 1,
+                countPerPage: 4,
+                searchName: '',
+                searchMaker: 'ALL',
+                searchModel: 'ALL'
+            },
+            searchName: '', // 검색을 위해 입력받은 고객 이름                 ┓
+            searchMaker: 'ALL', // 고객 테이블 검색 :차량 제조사              ┃
+            searchModel: 'ALL', // 고객 테이블 검색 :차량 모델                ┃
+            carModelShow: false, // 고객 테이블 검색, 차량 제조사 클릭 시 true ┃
+            searchVarCodeSelectBox: [], //                               ┃
+            searchVmlCodeSelectBox: [], //                               ┛
+            resultPopUp: false, // 팝업 ON|OFF 구분 변수
+            item: 'var', // 차량 제조사 | 모델 구분 변수수
+            carImgSearchData: {},
+            imgName: ''
+        }
+
+        let localMethod = {
+            search: function () {
+                this.pageData.searchData.searchName = this.pageData.searchName;
+                this.pageData.searchData.searchMaker = this.pageData.searchMaker;
+                this.pageData.searchData.searchModel = this.pageData.searchModel;
+                this.pageData.searchData.pageNo = 1;
+                this.tList();
+            },
+            tList: function() { // 테이블 가져오기
+                axiosGet("/api/system/result/list", { params: this.pageData.searchData },
+                    function (response) {
+                        vueApp.pageData.resultList = response.data.list;
+                        for (let count=0;count<vueApp.pageData.resultList.length;count++) {
+                            let data = vueApp.pageData.resultList[count].registDt;
+                            vueApp.pageData.resultList[count].registDt = vueApp.dateFormat(data);
+                        }
+                        vueApp.pageData.count = response.data.count;
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+            },
+            view: function (testid) { // 상세정보 팝업에 데이터 표시를 위해 클릭한 아이디의 데이터 가져오기
+                axiosPost("/api/system/result/" + testid, null,
+                    function (response) {
+                        vueApp.pageData.result = response.data;
+                        vueApp.pageData.result.soh = vueApp.pageData.result.soh.toString().substring(0, 5) + '%';
+                        vueApp.imgCall();
+                        vueApp.pageData.resultPopUp = true;
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            searchMakerCheck: function () { // 검색 항목에 차량 제조사 선택시 차량 모델 불러움
+                if(this.pageData.searchMaker === 'ALL') {
+                    vueApp.pageData.carModelShow = false;
+                }
+                axiosGet("/api/code/customerCarNameSelectBox/" + vueApp.pageData.searchMaker, null,
+                    function (response) {
+                        vueApp.pageData.searchVmlCodeSelectBox = response.data;
+                        vueApp.pageData.searchModel = "ALL";
+                        if(vueApp.pageData.searchMaker === 'ALL') {
+                            vueApp.pageData.carModelShow = false;
+                        } else {
+                            vueApp.pageData.searchVmlCodeSelectBox.unshift({ codelabel: 'ALL', codevalue: 'ALL' }); //배열값 첫번째에 "전체" 항목 추가하기
+                            vueApp.pageData.carModelShow = true;
+                        }
+                    }
+                )
+            },
+
+            /*=============================================================
+                                      이미지 경로 설정
+            =============================================================*/
+            imgCall: function () {
+                this.pageData.carImgSearchData.varcd = this.pageData.result.varcd;
+                this.pageData.carImgSearchData.vmlcd = this.pageData.result.vmlcd;
+                axiosPost("/api/image/imgCall", vueApp.pageData.carImgSearchData,
+                    function (response) {
+                        vueApp.pageData.imgName = response.data;
+                        vueApp.vehicleImg();
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0])
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            vehicleImg: function () { // <img>의 아이디 호출
+                document.getElementById('vehicle').src=vueApp.vehicle_info();
+            },
+            vehicle_info: function () { // src경로 설정을 위한 함수 호출
+                let imgName;
+                if(this.pageData.imgName != '') {
+                    imgName = this.pageData.imgName;
+                } else {
+                    imgName = 'Default.png';
+                }
+
+                let img_src = '/img/vehicle/' + imgName;
+                return img_src;
+            },
+
+            // ------------------------- vueMounted -------------------------
+
+            managerIdOfSession: function () {
+                axiosGet("/api/system/manager", null,
+                    function (response) {
+                        vueApp.pageData.managerDataOfSession = response.data;
+                    }
+                )
+            },
+            vehicleVarList: function(item) {
+                axiosGet("/api/code/getCodeSelectBox/" + item, null,
+                    function (response) {
+                        if(item != 'CTR'){
+                            vueApp.pageData.searchVarCodeSelectBox = response.data;
+                            vueApp.pageData.searchVarCodeSelectBox.unshift({ codelabel: '전체', codevalue: 'ALL' }); //배열값 첫번째에 "전체" 항목 추가하기
+                        }
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0])
+                    },
+                    commonNotifyError
+                )
+            },
+        }
+
+        function vueMounted() {
+            //this.workTimer();
+            this.managerIdOfSession();
+            this.vehicleVarList(this.pageData.item);
+            this.tList();
+        }
+
+    </script>
+</th:block>
+<th:block layout:fragment="scriptAfterCreateVue">
+</th:block>
+</html>

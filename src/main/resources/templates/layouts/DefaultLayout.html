@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<head th:replace="layouts/fragments/DefaultConfig::M_configFragment">
+</head>
+
+<body>
+	<th:block layout:fragment="scriptBeforeCreateVue"></th:block>
+
+	<script th:inline="javascript">
+		let activeTopMenuIndex = /*[[${activeTopMenuIndex}]]*/ '';
+		let activeLeftMenuIndex = /*[[${activeLeftMenuIndex}]]*/ '';
+	</script>
+
+	<div id="vueApp">
+		<el-container>
+			<div th:replace="layouts/fragments/DefaultHeader::M_headerFragment"></div>
+		</el-container>
+		<el-container>
+			<el-aside>
+				<div th:replace="layouts/fragments/DefaultAsideLeft::M_asideLeftFragment"></div>
+			</el-aside>
+			<div>
+				<div>
+					<el-main style="background-color: rgb(249,251, 252)">
+						<div></div>
+						<div layout:fragment="M_content" style=""></div><!--width: 100vw; height: 150vw-->
+					</el-main>
+					<template>
+						<div class="registration-title">
+							<el-dialog width="30%" :visible.sync="logoutDialogVisible"
+									   :close-on-click-modal=false center>
+								<h3>
+									Logout <span>notice</span>
+								</h3>
+								<div>
+									<template v-if="lefttime<31">
+										You'll be automatically logged out in {{lefttime}} seconds.
+									</template>
+								</div><br>
+								<div slot="footer" class="dialog-footer" style="text-align:center;">
+									<el-button type="primary" @click="logout()" class="save">Logout</el-button>
+									<el-button @click="extendSession()" class="exit">Session Extend</el-button>
+								</div>
+							</el-dialog>
+						</div>
+					</template>
+				</div>
+				<el-footer>
+					<div th:replace="layouts/fragments/DefaultFooter::M_footerFragment"></div>
+				</el-footer>
+			</div>
+		</el-container>
+	</div>
+
+	<script>
+
+        ELEMENT.locale(ELEMENT.lang.ko);
+
+		// 숫자 타입에서 쓸 수 있도록 format() 함수 추가
+		Number.prototype.format = function () {
+			if (this == 0) return 0;
+
+			let reg = /(^[+-]?\d+)(\d{3})/;
+			let n = (this + '');
+
+			while (reg.test(n)) n = n.replace(reg, '$1' + ',' + '$2');
+
+			return n;
+		};
+
+		// 문자열 타입에서 쓸 수 있도록 format() 함수 추가
+		String.prototype.formatNumber = function () {
+			let num = parseFloat(this);
+			if (isNaN(num)) return "0";
+
+			return num.format();
+		};
+
+		function formatNumber(row, column, cellValue, index) {
+			return (cellValue.format());
+		}
+
+		function formatVoltage(row, column, cellValue, index) {
+			return cellValue.format() + "V";
+		}
+
+		function formatAmpere(row, column, cellValue, index) {
+			return cellValue.format() + "V";
+		}
+
+		function formatMilliAmpere(row, column, cellValue, index) {
+			return cellValue.format() + "mA";
+		}
+
+		/*let basicPasswordToUpdate = {
+			currentPassword: "",
+			password: "",
+			confirmPassword: ""
+		}*/
+
+		let commonMethod = {
+			resetLeftTime: function() {
+				console.debug('resetLeftTime:', vueApp.lefttime);
+				this.lefttime = 600;
+			},
+			extendSession: function() {
+				this.resetLeftTime();
+				this.logoutDialogVisible = false;
+			},
+			/*workTimer: function() {  제천 -> 자동 로그아웃 기능 비활성화
+				const timer = setInterval(()=>{
+					vueApp.lefttime--;
+					console.debug(this.lefttime);
+					if (vueApp.lefttime < 31) {
+						this.logoutDialogVisible = true;
+					}
+					if (vueApp.lefttime<=0){
+						clearInterval(timer)
+						this.logoutDialogVisible = false;
+						alert("Automatic logout due to long-term usage not confirmed.")
+						this.logout();
+					}
+
+				}, 1000);
+			},*/
+			handleMenuItemClick: function (el) {
+				location.href = el;
+			},
+			logout: function () {
+				axiosPost("/api/security/logout", null,
+					function (response) {
+						location.href = "/view/mobileWeb/security/Login";
+					},
+					function (error) {
+						alert("Error while logging out.");
+					}
+				)
+			},
+			goMainHome: function() {
+				location.href = "/view/mobileWeb/home/Home";
+			},
+			goManagerManagement: function() {
+				location.href = "/view/mobileWeb/manager/Manager";
+			},
+			goCustomersManage: function() {
+				location.href = "/view/mobileWeb/customers/Customers";
+			},
+			goDeviceManage: function() {
+				location.href = "/view/mobileWeb/device/Device";
+			},
+			goDiagnosis: function () {
+				location.href = "/view/mobileWeb/diagnosis/DeviceConnection";
+			},
+			goResultManagement: function () {
+				location.href = "/view/mobileWeb/result/ResultManage";
+			},
+
+			dateFormat: function (data) {
+				let todayDate = new Date(data)
+				let year = todayDate.getFullYear();
+				let month = todayDate.getMonth() + 1;
+				let day = todayDate.getDate();
+				let hours = todayDate.getHours();
+				let minutes = todayDate.getMinutes();
+				let seconds = todayDate.getSeconds();
+				// 한자리 수 값이 있기 때문에 공백에 0 처리
+				if(month < 10){
+					month = '0' + month;
+				}
+				if(day < 10){
+					day = '0' + day;
+				}
+				if(hours < 10){
+					hours = '0' + hours;
+				}
+				if(minutes < 10){
+					minutes = '0' + minutes;
+				}
+				if(seconds < 10){
+					seconds = '0' + seconds;
+				}
+				return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+			},
+			numberFormatter: formatNumber,
+			voltageFormatter: formatVoltage,
+			ampereFormatter: formatAmpere,
+			milliAmpereFormatter: formatMilliAmpere
+		};
+
+		let pageMethod = Object.assign(commonMethod, localMethod);
+
+		if (typeof vueCreated == 'undefined') {
+			vueCreated = null;
+		}
+		if (typeof vueMounted == 'undefined') {
+			vueMounted = null;
+		}
+
+		Vue.component("qsol-page-title", {
+			props: ["title"],
+			template: "<div class='page-title'>{{ title }}</div>"
+		})
+
+		let vueApp = new Vue({
+			el: '#vueApp',
+			data: {
+				pageData: localData,
+				errorMessage: '',
+				errorMessages: [],
+				activeTopMenuIndex: activeTopMenuIndex,
+				activeLeftMenuIndex: activeLeftMenuIndex,
+				isLeftMenuCollapse: false,
+				//passwordToUpdate: basicPasswordToUpdate,
+				passwordDialogVisible: false,
+				lefttime: 600,
+				logoutDialogVisible: false,
+			},
+			methods: pageMethod,
+			create: vueCreated,
+			mounted: vueMounted
+		});
+
+		function numberWithCommas(x) {
+			return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+		}
+
+		function axiosGet(url, data, success, failure) {
+			axios.get(url, data)
+				.then(success)
+				.catch(failure);
+		}
+
+		function axiosPost(url, data, success, failure) {
+			axios.post(url, data)
+				.then(success)
+				.catch(failure);
+		}
+
+		function axiosPut(url, data, success, failure) {
+			axios.put(url, data)
+				.then(success)
+				.catch(failure);
+		}
+
+		function axiosDelete(url, data, success, failure) {
+			axios.delete(url, data)
+				.then(success)
+				.catch(failure);
+		}
+	</script>
+
+	<th:block layout:fragment="scriptAfterCreateVue"></th:block>
+</body>
+
+
+</html>

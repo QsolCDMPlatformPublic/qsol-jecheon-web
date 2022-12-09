@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layouts/DefaultLayout">
+
+<th:block layout:fragment="css">
+    <style>
+    </style>
+</th:block>
+
+<div layout:fragment="M_content">
+    <!-- Header-->
+    <header class="bg-dark py-5">
+        <div class="container px-4 px-lg-5 my-5-onlyUsingLoginPage" style="padding: 0 !important; margin: 0; max-width: 100% !important;">
+            <div class="text-center text-white">
+                <h1 class="display-4 fw-bolder">
+                    QUANTUM SOLUTION
+                </h1>
+                <!--<p class="lead fw-normal text-white-50 mb-0">User Login</p>-->
+            </div>
+        </div>
+    </header>
+    <!-- Section-->
+    <section class="py-5">
+        <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%)"><!--height: 132vw-->
+            <el-form ref="form" label-width="120px" class="loginFormDiv">
+                <div style="display: inline-flex; margin: 10px">
+                    <label style="margin-right: 10px;width: 120px;font-size: 1.3rem;line-height: 1.8;">Id</label>
+                    <el-input type="text" class="login-id" placeholder="Please enter your ID" id="id" ref="id" autofocus style="margin: 0 auto; width:300px; margin-bottom:10px;"
+                              v-model="pageData.loginInfo.managerId" @keyup.enter.native="handleEnter"></el-input>
+                </div>
+                <br>
+                <div style="display: inline-flex; margin: 10px">
+                    <label style="margin-right: 10px;width: 120px;font-size: 1.3rem;line-height: 1.8;">Password</label>
+                    <el-input type="text" class="login-id" placeholder="Please enter your Password" id="managerPw" ref="managerPw" style="margin: 0 auto; width:300px; margin-bottom:10px;"
+                              v-model="pageData.loginInfo.managerPw" show-password @keyup.enter.native="handleEnter">
+                    </el-input>
+                </div>
+                <div>
+                    <el-checkbox v-model="pageData.loginInfo.saveLoginInfo">로그인 정보 저장</el-checkbox><br>
+                    <el-button style="width: 430px; margin: 20px" type="primary" @click="loginGo" class="login-button">로그인</el-button>
+                </div>
+            </el-form>
+        </div>
+<!--
+        <div class="modal fade" id="errorModal" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal_div" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 id="modalTitle"></h5>
+                    </div>
+                    <div class="modal-body">
+                        <img src="/images/error-icon.png" alt="">
+                        <p id="modalText"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="exit" onClick="closePopup();">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>-->
+    </section>
+</div>
+
+<th:block layout:fragment="scriptBeforeCreateVue">
+    <script>
+        let localData = {
+            loginInfo: {
+                managerId: "",
+                managerPw: "",
+                saveLoginInfo: false
+            },
+        }
+
+        let localMethod = {
+            handleEnter: function (event) {
+                console.log(event.srcElement.id);
+                console.log(this.$refs);
+                if (event.srcElement.id == "id") {
+                    this.$refs.managerPw.focus();
+                } else {
+                    this.loginGo();
+                }
+            },
+            loginGo: function () { // 로그인 시도
+                axiosPost("/api/security/login", vueApp.pageData.loginInfo,
+                    function (response) {
+                        if(response.data == 'root') {
+                            location.href = "/view/mobileWeb/home/Home";
+                        } else {
+                            location.href = "/view/mobileWeb/diagnosis/StaffDeviceConnection?item=1";
+                        }
+
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0])
+                    },
+                    commonNotifyError
+                )
+            },
+            loginSaveData: function () { // 화면 실행될 때, 세션에 저장된 로그인 정보가 있는지 확인
+                axiosGet("/api/security/loginSaveData", null,
+                    function (response) {
+                        vueApp.pageData.loginInfo.managerId = response.data.managerId;
+                        vueApp.pageData.loginInfo.managerPw = response.data.managerPw;
+                        if(vueApp.pageData.loginInfo.managerId!=undefined) {
+                            vueApp.pageData.loginInfo.saveLoginInfo = true;
+                        }
+                        //삭제해야됨
+                        //vueApp.pageData.loginInfo.managerId = "";
+                        //vueApp.pageData.loginInfo.managerPw = "";
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0])
+                    },
+                    commonNotifyError
+                )
+            }
+        }
+
+        /*window.onload = function () {
+            this.loginSaveData();
+        }*/
+        /*$(document).ready(function () {
+            this.loginSaveData();
+        })*/
+        function vueMounted() {
+            this.loginSaveData();
+        }
+
+    </script>
+</th:block>
+<th:block layout:fragment="scriptAfterCreateVue">
+</th:block>
+</html>

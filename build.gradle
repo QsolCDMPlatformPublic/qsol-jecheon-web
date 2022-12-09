@@ -1,0 +1,80 @@
+plugins {
+    id 'org.springframework.boot' version '2.6.2'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'java'
+}
+
+group = 'qsol-jecheon-web'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // MariaDB
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+    implementation 'org.mariadb.jdbc:mariadb-java-client'
+
+    // JPA
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Thymeleaf
+    //implementation 'org.springframework.boot:spring-boot-starter-thymeleaf:2.6.2'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-thymeleaf', version: '2.6.2'
+    implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
+
+    // json
+    implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.3'
+
+    // ETC
+    //runtimeOnly 'org.postgresql:postgresql'
+    //implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.23'
+    implementation 'org.springframework.boot:spring-boot-starter-validation' // @Valid 사용을 위한
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    compileOnly 'org.apache.commons:commons-lang3:3.11' // lang3
+    compileOnly 'commons-codec:commons-codec'
+    implementation 'org.modelmapper:modelmapper:2.3.8'
+    implementation "org.springframework.boot:spring-boot-starter-undertow"
+    implementation 'com.opencsv:opencsv:5.2'
+    implementation group: 'com.google.guava', name: 'guava', version: '30.1.1-jre'
+    implementation 'org.apache.httpcomponents:httpclient:4.5.12'
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
+    implementation 'org.json:json:20201115'
+    implementation 'org.webjars:jquery:3.4.0'
+    implementation 'jakarta.validation:jakarta.validation-api:2.0.2'
+//    compile 'org.springframework.boot:spring-boot-devtools' // 새로고침
+    /*
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    */
+
+    /*implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    compileOnly 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+    //implementation group: 'org.javassist', name: 'javassist', version: '3.15.0-GA'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'*/
+
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

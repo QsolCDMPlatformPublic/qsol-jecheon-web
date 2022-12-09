@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layouts/DefaultLayout">
+
+<th:block layout:fragment="css">
+    <style>
+        .box {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+        .box::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera*/
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="M_content" class="backgroundColor">
+    <header class="bg-dark py-5">
+        <div class="container"> <!--px-4 px-lg-5 my-5-->
+            <div class="text-center text-white">
+                <h1 class="display-4 fw-bolder" id="top">고 객</h1>
+            </div>
+        </div>
+    </header>
+
+    <template>
+        <div style="text-align: left; font-size: x-large; color: #6a1a21; position: absolute">
+            <el-button @click="goMainHome" class="buttonCss" style="margin-left: 10px; background-color: antiquewhite">
+                <img src="/img/home.png" class="logoutCss">
+            </el-button>
+        </div>
+        <div style="text-align: right; font-size: x-large; color: #6a1a21;">
+            <img src="/img/manager.png" style="width: 43px; height: 40px; margin-right: 5px">
+            <span style="vertical-align: middle; margin-right: 10px">{{ pageData.managerDataOfSession }}</span>
+            <el-button @click="logout" class="buttonCss" style="margin-left: 10px; margin-right: 10px; background-color: antiquewhite">
+                <img src="/img/logout.png" class="logoutCss">
+            </el-button>
+        </div>
+        <hr style="margin-top: 0.2rem">
+        <div style="text-align: center">
+            <!--고객 이름으로 테이블 검색-->
+            <div style="position: absolute; margin-left: 5px">
+                <div style="display: inline-block; width: 15vw; vertical-align: middle">
+                    <el-input placeholder="이름" v-model="pageData.searchName" style="display: inline-block" maxlength="50" show-word-limit></el-input>
+                </div>
+                <div style="display: inline-block; margin-left: 10px; width: 15vw">
+                    <el-select v-model="pageData.searchMaker" @change="searchMakerCheck()">
+                        <el-option
+                                v-for="item in pageData.searchVarCodeSelectBox"
+                                :key="item.codevalue"
+                                :label="item.codelabel"
+                                :value="item.codevalue">
+                        </el-option>
+                    </el-select>
+                </div>
+                <template v-if="pageData.carModelShow">
+                    <div style="display: inline-block; margin-left: 10px; width: 15vw">
+                        <el-select v-model="pageData.searchModel">
+                            <el-option
+                                    v-for="item in pageData.searchVmlCodeSelectBox"
+                                    :key="item.codevalue"
+                                    :label="item.codelabel"
+                                    :value="item.codevalue">
+                            </el-option>
+                        </el-select>
+                    </div>
+                </template>
+                <el-button @click="search()" style="vertical-align: middle; margin-left: 10px;">검색</el-button>
+            </div>
+
+            <!--고객 신규 등록 버튼-->
+            <div class="system-registration" style="text-align: right; margin-bottom: 10px">
+                <el-button style="background-color: black; color: white; margin-right: 5px" type="primary" @click="showCreate()">신규</el-button>
+            </div>
+
+            <!--등록된 고객 리스트-->
+            <div class="table-contents-wrap">
+                <el-table :data="pageData.customersList">
+                    <!--<el-table-column label="No." class-name="data-table-cell" label-class-name="data-table-header"
+                                     style="width:10%">
+                        <template slot-scope="scope">
+                            {{ pageData.count - ((pageData.searchData.pageNo - 1) * pageData.searchData.countPerPage) -
+                            scope.$index }}
+                        </template>
+                    </el-table-column>-->
+                    <el-table-column label="이름" class-name="data-table-cell" label-class-name="data-table-header"
+                                     style="width:35%">
+                        <template slot-scope="scope">
+                            <el-link @click="view(scope.row.cid)" style="color: #416DB0">{{ scope.row.customersName }}</el-link>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="customersPhone" label="휴대폰" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <!--<el-table-column prop="customersShowAddress" label="주소" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>-->
+                    <el-table-column prop="vehicleMaker" label="제조사" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <el-table-column prop="vehicleName" label="모델" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <el-table-column prop="testCount" label="진단횟수" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <!--<el-table-column label="Diagnosis Count" class-name="data-table-cell" label-class-name="data-table-header"
+                                     style="width:35%">
+                        <template slot-scope="scope">
+                            {{ scope.row.customersTestResultCount }} &nbsp;
+                            <el-button type="info" @click="diagnosisResult(scope.row.cid)" style="padding: 2px">
+                                <img src="/img/detail.png" style="width:30px;">
+                            </el-button>
+                        </template>
+                    </el-table-column>-->
+                    <el-table-column prop="customersRegistDt" label="등록일자" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                </el-table>
+                <el-pagination small layout="prev, pager, next" :total="pageData.count"
+                               :page-size="pageData.searchData.countPerPage" :current-page.sync="pageData.searchData.pageNo"
+                               @current-change="cList">
+                </el-pagination>
+
+                <!--고객 신규 등록 & 업데이트 팝업-->
+                <div class="info-registration-title">
+                    <el-dialog class="el-dialogCustoerms" width="30%" :visible.sync="pageData.customersPopUp" :close-on-click-modal=false center>
+                        <h3>
+                            고객
+                            <span>
+							<template v-if="pageData.isCreate">
+								등록
+							</template>
+							<template v-else>
+								수정
+							</template>
+						</span>
+                        </h3>
+                        <div class="manager">
+                            <template v-if="!pageData.isCreate">
+                                <div style="text-align:left; margin-bottom: 20px">
+                                    <el-button @click="pageData.popUpSwitch=false, viewBeforeStep()" class="exit">고객</el-button>
+                                    <el-button @click="pageData.carSearchData.pageNo=1, pageData.popUpSwitch=true, carListBeforeStep()" class="exit">차량</el-button>
+                                </div>
+                            </template>
+
+                            <template v-if="!pageData.popUpSwitch">
+                                <el-form ref="form" :model="pageData.customers" label-width="120px" style="height: 500px;  overflow-y: auto;" class="box">
+                                    <p>고객 정보</p>
+                                    <el-form-item label="이름">
+                                        <el-input v-model="pageData.customers.customersName" maxlength="20" show-word-limit><!--v-bind:readonly="!pageData.isCreate" -->
+                                        </el-input>
+                                    </el-form-item>
+                                    <el-form-item label="휴대폰">
+                                        <el-input type="text"
+                                                  oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');"
+                                                  v-model="pageData.customers.customersPhone" maxlength="20" show-word-limit></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="주소 1">
+                                        <el-input v-model="pageData.customers.customersAddress1" maxlength="250" show-word-limit></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="주소 2">
+                                        <el-input v-model="pageData.customers.customersAddress2" maxlength="250" show-word-limit></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="우편번호">
+                                        <el-input v-model="pageData.customers.customersZipcode" maxlength="5" show-word-limit></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="국가">
+                                        <el-select v-model="pageData.customers.customersCountry">
+                                            <el-option
+                                                    v-for="item in pageData.countryCodeSelectBox"
+                                                    :key="item.codevalue"
+                                                    :label="item.codelabel"
+                                                    :value="item.codevalue">
+                                            </el-option>
+                                        </el-select>
+                                        <!--<el-input v-model="pageData.customers.customersCountry" maxlength="20" show-word-limit></el-input>-->
+                                    </el-form-item>
+                                </el-form>
+                            </template>
+                            <template v-else>
+                                <!--고객 차량 리스트 -->
+                                <template v-if="!pageData.isCreate">
+                                    <h3>고객 <span> 차량 리스트</span></h3>
+                                    <div class="manager">
+                                        <div class="system-registration" style="text-align: right">
+                                            <el-button style="background-color: black; color: white; margin-bottom: 5px" type="primary" @click="newCarCreate()">등록</el-button>
+                                        </div>
+                                        <el-table :data="pageData.customersCarList">
+                                            <!--<el-table-column label="No." class-name="data-table-cell" label-class-name="data-table-header"
+                                                             style="width:10%">
+                                                <template slot-scope="scope">
+                                                    {{ pageData.carListCount - ((pageData.carSearchData.pageNo - 1) * pageData.carSearchData.countPerPage) -
+                                                    scope.$index }}
+                                                </template>
+                                            </el-table-column>-->
+                                            <el-table-column label="차량번호" class-name="data-table-cell" label-class-name="data-table-header"
+                                                             style="width:35%">
+                                                <template slot-scope="scope">
+                                                    <el-link @click="carView(scope.row.carId)" style="color: #416DB0">{{ scope.row.customersCarNumber }}</el-link>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column prop="customersCarMaker" label="제조사" class-name="data-table-cell"
+                                                             label-class-name="data-table-header" style="width:20%">
+                                            </el-table-column>
+                                            <el-table-column prop="customersCarName" label="모델" class-name="data-table-cell"
+                                                             label-class-name="data-table-header" style="width:20%">
+                                            </el-table-column>
+                                            <el-table-column prop="customersCarYear" label="연식" class-name="data-table-cell"
+                                                             label-class-name="data-table-header" style="width:20%">
+                                            </el-table-column>
+                                            <el-table-column prop="customersCarMileage" label="주행거리" class-name="data-table-cell"
+                                                             label-class-name="data-table-header" style="width:20%">
+                                            </el-table-column>
+                                        </el-table>
+                                        <el-pagination small layout="prev, pager, next" :total="pageData.carListCount"
+                                                       :page-size="pageData.carSearchData.countPerPage" :current-page.sync="pageData.carSearchData.pageNo"
+                                                       @current-change="carListBeforeStep">
+                                        </el-pagination>
+                                    </div>
+                                </template>
+                            </template>
+
+                        </div>
+                        <div slot="footer" class="dialog-footer" style="text-align:center">
+                            <template v-if="!pageData.popUpSwitch">
+                                <el-button type="primary" @click="save()" class="save">저장</el-button>
+                            </template>
+                            <template v-if="!pageData.popUpSwitch">
+                                <template v-if="pageData.deleteSwitch">
+                                    <el-button @click="customersDelete()" class="exit">삭제</el-button>
+                                </template>
+                            </template>
+                            <el-button @click="pageData.popUpSwitch=false, pageData.customersPopUp=false, pageData.isCreate=false, pageData.carSearchData.pageNo=1, pageData.deleteSwitch=false" class="exit"
+                                 style="margin-top: 10px">닫기</el-button>
+                        </div>
+                    </el-dialog>
+                </div>
+                
+                <!--고객 차량 신규 등록 & 업데이트 팝업-->
+                <div class="info-registration-title">
+                    <el-dialog width="30%" :visible.sync="pageData.carCreateUpdatePopUp" :close-on-click-modal=false center>
+                        <h3>
+                            고객
+                            <span>
+							<template v-if="pageData.isCreate2">
+								차량 신규 등록
+							</template>
+							<template v-else>
+								차량 수정
+							</template>
+						    </span>
+                        </h3>
+                        <div class="manager">
+                            <el-form ref="form" :model="pageData.vehicle" label-width="120px" style="height: 600px;  overflow-y: auto;" class="box">
+                                <p>차량 정보</p>
+                                <el-form-item label="차량 번호">
+                                    <el-input v-model="pageData.vehicle.customersCarNumber" maxlength="20" show-word-limit></el-input>
+                                    <!--v-bind:readonly="!pageData.isCreate2"-->
+                                </el-form-item>
+                                <el-form-item label="제조사">
+                                    <el-select v-model="pageData.vehicle.customersCarMaker" @change="customerCarMakerCheck()">
+                                        <el-option
+                                                v-for="item in pageData.varCodeSelectBox"
+                                                :key="item.codevalue"
+                                                :label="item.codelabel"
+                                                :value="item.codevalue">
+                                        </el-option>
+                                    </el-select>
+                                </el-form-item>
+                                <template v-if="pageData.carNameInputShow">
+                                    <el-form-item label="모델">
+                                        <el-select v-model="pageData.vehicle.customersCarName">
+                                            <el-option
+                                                    v-for="item in pageData.vmlCodeSelectBox"
+                                                    :key="item.codevalue"
+                                                    :label="item.codelabel"
+                                                    :value="item.codevalue">
+                                            </el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </template>
+                                <el-form-item label="연식">
+                                    <el-select v-model="pageData.vehicle.customersCarYear">
+                                        <el-option
+                                                v-for="item in pageData.yearSelectBox"
+                                                :key="item.year"
+                                                :label="item.year"
+                                                :value="item.year">
+                                        </el-option>
+                                    </el-select>
+                                </el-form-item>
+                                <el-form-item label="주행거리">
+                                    <el-input type="text"
+                                              oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');"
+                                              v-model="pageData.vehicle.customersCarMileage" maxlength="11" show-word-limit></el-input>
+                                </el-form-item>
+                            </el-form>
+                        </div>
+                        <div slot="footer" class="dialog-footer" style="text-align:center">
+                            <el-button type="primary" @click="carSave()" class="save">저장</el-button>
+                            <template v-if="!pageData.isCreate2">
+                                <el-button @click="vehicleDelete()" class="exit">삭제</el-button>
+                            </template>
+                            <el-button @click="pageData.carCreateUpdatePopUp=false, pageData.isCreate2=false, pageData.carNameInputShow=false" class="exit">닫기</el-button>
+                        </div>
+                    </el-dialog>
+                </div>
+
+                <!--&lt;!&ndash; 고객 진단 결과 테이블 팝업&ndash;&gt;
+                <div class="info-registration-title">
+                    <el-dialog class="el-dialogCustoerms" width="30%" :visible.sync="pageData.diagnosisResultPopUp" :close-on-click-modal=false center>
+                        <h3>
+                            Customer<span> Diagnosis Result List</span>
+                        </h3>
+                        <div class="manager">
+                            <el-table :data="pageData.diagnosis">
+                                <el-table-column label="No." class-name="data-table-cell" label-class-name="data-table-header"
+                                                 style="width:10%">
+                                    <template slot-scope="scope">
+                                        {{ pageData.diagnosisCount - ((pageData.diagnosisSearchData.pageNo - 1) * pageData.diagnosisSearchData.countPerPage) -
+                                        scope.$index }}
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="vehicleNo" label="Vehicle" class-name="data-table-cell"
+                                                 label-class-name="data-table-header" style="width:20%">
+                                </el-table-column>
+                                <el-table-column prop="carYear" label="Year" class-name="data-table-cell"
+                                                 label-class-name="data-table-header" style="width:20%">
+                                </el-table-column>
+                                <el-table-column prop="grade" label="Grade" class-name="data-table-cell"
+                                                 label-class-name="data-table-header" style="width:20%">
+                                </el-table-column>
+                                <el-table-column prop="lastSoc" label="SOC" class-name="data-table-cell"
+                                                 label-class-name="data-table-header" style="width:20%">
+                                </el-table-column>
+                                <el-table-column prop="soh" label="SOH" class-name="data-table-cell"
+                                                 label-class-name="data-table-header" style="width:20%">
+                                </el-table-column>
+                                <el-table-column prop="reasonMsg" label="Reason Masage" class-name="data-table-cell"
+                                                 label-class-name="data-table-header" style="width:20%">
+                                </el-table-column>
+                                <el-table-column prop="managerId" label="Manager" class-name="data-table-cell"
+                                                 label-class-name="data-table-header" style="width:20%">
+                                </el-table-column>
+                                <el-table-column prop="startDt" label="Start Date" class-name="data-table-cell"
+                                                 label-class-name="data-table-header" style="width:20%">
+                                </el-table-column>
+                                <el-table-column prop="elapsedSeconds" label="Elapsed Seconds" class-name="data-table-cell"
+                                                 label-class-name="data-table-header" style="width:20%">
+                                </el-table-column>
+                                <el-table-column prop="endDt" label="End Date" class-name="data-table-cell"
+                                                 label-class-name="data-table-header" style="width:20%">
+                                </el-table-column>
+                            </el-table>
+                            <el-pagination small layout="prev, pager, next" :total="pageData.diagnosisCount"
+                                           :page-size="pageData.diagnosisSearchData.countPerPage" :current-page.sync="pageData.diagnosisSearchData.pageNo"
+                                           @current-change="diagnosisStep">
+                            </el-pagination>
+                        </div>
+                        <div slot="footer" class="dialog-footer" style="text-align:center">
+                            <el-button @click="pageData.diagnosisResultPopUp=false, pageData.diagnosisSearchData.pageNo=1" class="exit">Close</el-button>
+                        </div>
+                    </el-dialog>
+                </div>-->
+
+            </div>
+        </div>
+    </template>
+</div>
+
+<th:block layout:fragment="scriptBeforeCreateVue">
+    <script>
+        let customersDefault = { // create 수행 시 form에서 받아온 데이터를 저장할 변수
+            // customers info
+            cid: 0,
+            customersName: '', // 고객 이름
+            customersPhone: '', // 고객 휴대폰
+            customersAddress1: '', // 주소1
+            customersAddress2: '', // 주소2
+            customersZipcode: '', // 주소3
+            customersCountry: '', // 지역
+        }
+
+        let vehicleDefault = {
+            // car information
+            carId: 0,
+            customerId: 0,
+            customersCarNumber: '', // 차량번호
+            customersCarMaker: '', // 차량제조사
+            customersCarName: '', // 차량모델
+            customersCarYear: '', // 차량연식
+            customersCarMileage: 0, // 주행거리
+            registDt: ''
+        }
+
+        let localData = {
+            managerDataOfSession: '', // 현재 세션의 관리자 아이디
+            customers: customersDefault, //
+            vehicle: vehicleDefault,
+            customersList: [], // 고객 테이블 리스트
+            customersCarList: [], // 고객 차량 테이블 리스트
+            count: 0, // 고객 테이블 페이징
+            carListCount: 0, // 고객 차량 테이블 페이징
+            searchData: { // 고객 테이블
+                pageNo: 1,
+                countPerPage: 4,
+                searchName: '',
+                searchMaker: 'ALL',
+                searchModel: 'ALL'
+            },
+            carSearchData: { // 고객 차량 테이블
+                pageNo: 1,
+                countPerPage: 4
+            },
+            searchName: '', // 검색을 위해 입력받은 고객 이름                 ┓
+            searchMaker: 'ALL', // 고객 테이블 검색 :차량 제조사              ┃
+            searchModel: 'ALL', // 고객 테이블 검색 :차량 모델                ┃
+            carModelShow: false, // 고객 테이블 검색, 차량 제조사 클릭 시 true ┃
+            searchVarCodeSelectBox: [], //                               ┃
+            searchVmlCodeSelectBox: [], //                               ┛
+            isCreate: false, // 고객 등록 | 수정 구분 변수
+            isCreate2: false, // 고객 차량 등록 | 수정 구분 변수
+            customersPopUp: false, // 팝업 ON|OFF 구분 변수
+            carCreateUpdatePopUp: false, // 고객 차량 신규 등록 & 업데이트 팝업 ON|OFF 구분 변수
+            carNameInputShow: false, // create 시 차량 제조사 선택하면 차량 모델 인풋폼 생성
+            varCodeSelectBox: [], // 차량 제조사 코드 리스트
+            vmlCodeSelectBox: [], // 차량 모델 코드 리스트
+            item: 'var', // 차량 제조사 | 모델 구분 변수수
+
+            diagnosisResultPopUp: false, // 진단 결과 팝업 ON|OFF
+            diagnosis: [], // 진단 결과 리스트
+            diagnosisCount: 0, // 진단 결과 페이징
+            diagnosisSearchData: {
+                pageNo: 1,
+                countPerPage: 10
+            },
+            stepForCid: 0, // 진단 결과 페이징 목록 변환시 다시 리스트 조회를 위해 고객 cid를 미리 담아두는 변수
+            yearSelectBox: {
+                year:''
+            },
+            countryCodeSelectBox: [],
+
+            popUpSwitch: false,
+            deleteSwitch: false
+        }
+
+        let localMethod = {
+            search: function () {
+                this.pageData.searchData.searchName = this.pageData.searchName;
+                this.pageData.searchData.searchMaker = this.pageData.searchMaker;
+                this.pageData.searchData.searchModel = this.pageData.searchModel;
+                this.cList();
+            },
+            cList: function() { // 고객 목록 테이블 가져오기
+                axiosGet("/api/system/customers/list", { params: this.pageData.searchData },
+                    function (response) {
+                        vueApp.pageData.customersList = response.data.list;
+                        for (let count=0;count<vueApp.pageData.customersList.length;count++) {
+                            let data = vueApp.pageData.customersList[count].customersRegistDt;
+                            vueApp.pageData.customersList[count].customersRegistDt = vueApp.dateFormat(data);
+                        }
+                        vueApp.pageData.count = response.data.count;
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+            },
+            carList: function(cid) { // 고객 차량 목록 테이블 가져오기
+                this.pageData.customersCarList = [];
+                axiosGet("/api/system/customers/vehicleList/" + cid, { params: this.pageData.carSearchData },
+                    function (response) {
+                        vueApp.pageData.customersCarList = response.data.list;
+                        vueApp.pageData.carListCount = response.data.count;
+                        for(let i = 0; i < vueApp.pageData.customersCarList.length; i++) {
+                            vueApp.pageData.customersCarList[i].customersCarMileage =
+                                numberWithCommas(vueApp.pageData.customersCarList[i].customersCarMileage);
+                        }
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+            },
+            showCreate: function() { // 고객 신규 등록 버튼 클릭
+                this.resetLeftTime();
+                this.pageData.isCreate = true; // isCreate를 신규 등록으로 구분
+                this.pageData.customers = Object.assign({}, customersDefault); // 데이터를 담을 변수 초기화
+                this.pageData.customersPopUp = true; // 팝업 ON 전환
+            },
+            newCarCreate: function () { // 고객 차량 신규 등록 버튼 클릭
+                this.resetLeftTime();
+                this.pageData.isCreate2 = true
+                this.pageData.vehicle = Object.assign({}, vehicleDefault);
+                this.pageData.carCreateUpdatePopUp = true;
+            },
+            save: function() { // (고객)저장 버튼을 통해 실행될 작업을 create와 update로 구분하기 위한 지점
+                if(this.pageData.isCreate === true) { // create
+                    this.customersCreate();
+                } else { // update
+                    this.customersUpdate();
+                }
+            },
+            carSave: function() { // (차량)저장 버튼을 통해 실행될 작업을 create와 update로 구분하기 위한 지점
+                if(this.pageData.isCreate2 === true) { // create
+                    this.carCreate(this.pageData.customers.cid);
+                } else { // update
+                    this.carUpdate();
+                }
+            },
+            customersCreate: function() { // 고객 신규 등록 실행
+                axiosPost("/api/system/customers/create", vueApp.pageData.customers,
+                    function() {
+                        alert("등록되었습니다.");
+                        vueApp.pageData.isCreate = false;
+                        vueApp.pageData.customersPopUp = false;
+                        vueApp.cList();
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            carCreate: function (cid) { // 차량 신규 등록 실행
+                axiosPost("/api/system/customers/carCreate/" + cid, vueApp.pageData.vehicle,
+                    function() {
+                        alert("등록되었습니다.");
+                        vueApp.pageData.isCreate2 = false;
+                        vueApp.pageData.carCreateUpdatePopUp = false;
+                        vueApp.carListBeforeStep();
+                        vueApp.cList();
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            view: function (cid) { // 고객 상세정보 팝업에 데이터 표시를 위해 클릭한 아이디의 데이터 가져오기
+                axiosPost("/api/system/customers/" + cid, null,
+                    function (response) {
+                        vueApp.pageData.customers = response.data[0];
+                        vueApp.pageData.customersPopUp = true;
+                        vueApp.pageData.deleteSwitch = true;
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            viewBeforeStep: function () {
+                this.view(this.pageData.customers.cid);
+            },
+            carListBeforeStep: function () {
+                this.carList(this.pageData.customers.cid);
+            },
+            carView: function (carId) { // 차량 상세정보 팝업에 데이터 표시를 위해 클릭한 아이디의 데이터 가져오기
+                axiosPost("/api/system/customers/vehicle/" + carId, null,
+                    function (response) {
+                        vueApp.pageData.vehicle = response.data[0];
+                        axiosGet("/api/code/customerCarNameSelectBox/" + vueApp.pageData.vehicle.customersCarMaker, null,
+                            function (response) {
+                                vueApp.pageData.vmlCodeSelectBox = response.data;
+                            }
+                        )
+                        vueApp.pageData.carNameInputShow = true
+                        vueApp.pageData.carCreateUpdatePopUp = true;
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            customersUpdate: function() { // 고객 정보 업데이트 실행
+                axiosPut("/api/system/customers", vueApp.pageData.customers,
+                    function () {
+                        alert("수정되었습니다.");
+                        vueApp.pageData.customersPopUp = false;
+                        vueApp.cList();
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            carUpdate: function () {
+                axiosPut("/api/system/customers/vehicleUpdate", vueApp.pageData.vehicle,
+                    function () {
+                        alert("수정되었습니다.");
+                        vueApp.pageData.carCreateUpdatePopUp = false;
+                        vueApp.carListBeforeStep();
+                        vueApp.cList();
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            customersDelete: function () {
+                if(confirm("고객 [" + this.pageData.customers.customersName + "] 의 정보를 삭제하시겠습니까?") == true) {
+                    axiosDelete("/api/system/customers/customersDelete/" + vueApp.pageData.customers.cid, null,
+                        function () {
+                            alert("삭제되었습니다.")
+                            vueApp.pageData.popUpSwitch = false;
+                            vueApp.pageData.customersPopUp = false;
+                            vueApp.pageData.isCreate = false;
+                            vueApp.pageData.carSearchData.pageNo = 1;
+                            vueApp.cList();
+                        }
+                    )
+                } else {
+                    return false;
+                }
+            },
+            vehicleDelete: function () {
+                if(confirm("차량 [" + this.pageData.vehicle.customersCarNumber + "] 의 정보를 삭제하시겠습니까?") == true) {
+                    axiosDelete("/api/system/customers/vehicleDelete/" + vueApp.pageData.vehicle.carId, null,
+                        function () {
+                            alert("삭제되었습니다.")
+                            vueApp.pageData.carCreateUpdatePopUp = false;
+                            vueApp.pageData.isCreate2 = false;
+                            vueApp.pageData.carNameInputShow = false;
+                            vueApp.carListBeforeStep();
+                            vueApp.cList();
+                        }
+                    )
+                } else {
+                    return false;
+                }
+
+            },
+            customerCarMakerCheck: function () { // 고객 차량 등록&업데이트 시 차량 제조사 선택하면 차량모델 셀렉박스가 열리며 제조사에 해당하는 차량만 나옴
+                axiosGet("/api/code/customerCarNameSelectBox/" + vueApp.pageData.vehicle.customersCarMaker, null,
+                    function (response) {
+                        vueApp.pageData.vmlCodeSelectBox = response.data;
+                        vueApp.pageData.vehicle.customersCarName = "";
+                        vueApp.pageData.carNameInputShow = true;
+                    }
+                )
+            },
+            searchMakerCheck: function () { // 고객 검색 항목에 차량 제조사 선택시 차량 모델 불러움
+                if(this.pageData.searchMaker === 'ALL') {
+                    vueApp.pageData.carModelShow = false;
+                }
+                axiosGet("/api/code/customerCarNameSelectBox/" + vueApp.pageData.searchMaker, null,
+                    function (response) {
+                        vueApp.pageData.searchVmlCodeSelectBox = response.data;
+                        vueApp.pageData.searchModel = "ALL";
+                        if(vueApp.pageData.searchMaker === 'ALL') {
+                            vueApp.pageData.carModelShow = false;
+                        } else {
+                            vueApp.pageData.searchVmlCodeSelectBox.unshift({ codelabel: 'ALL', codevalue: 'ALL' }); //배열값 첫번째에 "전체" 항목 추가하기
+                            vueApp.pageData.carModelShow = true;
+                        }
+                    }
+                )
+            },
+
+            /*// ------------------------- 진단 결과 확인 -------------------------
+            diagnosisResult: function (cid) {
+                axiosGet("/api/diagnosis/" + cid, { params: this.pageData.diagnosisSearchData },
+                    function (response) {
+                        vueApp.pageData.diagnosis = response.data.list;
+                        vueApp.pageData.diagnosisCount = response.data.count;
+                        vueApp.pageData.stepForCid = cid
+                        vueApp.startDtAndEndDtDateFormat();
+                        vueApp.pageData.diagnosisResultPopUp = true;
+                    }
+                )
+                this.resetLeftTime();
+            },
+            startDtAndEndDtDateFormat: function () {
+                let count = 0;
+                while(count < 2) {
+                    if(count === 0) {
+                        for (let i=0;i<vueApp.pageData.diagnosis.length;i++) {
+                            let data = vueApp.pageData.diagnosis[i].startDt;
+                            vueApp.pageData.diagnosis[i].startDt = vueApp.dateFormat(data);
+                        }
+                        count++;
+                    } else {
+                        for (let i=0;i<vueApp.pageData.diagnosis.length;i++) {
+                            let data = vueApp.pageData.diagnosis[i].endDt;
+                            vueApp.pageData.diagnosis[i].endDt = vueApp.dateFormat(data);
+                        }
+                        count++;
+                    }
+                }
+            },
+            diagnosisStep: function () {
+                this.diagnosisResult(this.pageData.stepForCid);
+            },*/
+
+            // ------------------------- vueMounted -------------------------
+
+            managerIdOfSession: function () {
+                axiosGet("/api/system/manager", null,
+                    function (response) {
+                        vueApp.pageData.managerDataOfSession = response.data;
+                    }
+                )
+            },
+            // 화면 시작 시 차량 코드의 등록&수정을 위해 미리 코드 셀렉박스 데이터를 가져와 저장해두기
+            // + country 코드 셀렉 박스
+            vehicleVarList: function(item) {
+                axiosGet("/api/code/getCodeSelectBox/" + item, null,
+                    function (response) {
+                        if(item != 'CTR'){
+                            vueApp.pageData.searchVarCodeSelectBox = response.data;
+                            vueApp.pageData.searchVarCodeSelectBox.unshift({ codelabel: '전체', codevalue: 'ALL' }); //배열값 첫번째에 "전체" 항목 추가하기
+                            vueApp.pageData.varCodeSelectBox = response.data;
+                        } else {
+                            vueApp.pageData.countryCodeSelectBox = response.data;
+                        }
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0])
+                    },
+                    commonNotifyError
+                )
+            },
+            yearSelectBoxSetting: function () {
+                let todayDate = new Date()
+                let year = todayDate.getFullYear();
+                for(let i = 0; i < 10; i++) {
+                    this.pageData.yearSelectBox[i] = {year: year - i};
+                }
+            },
+            countrySelectBox: function () {
+                this.pageData.item = 'CTR';
+                this.vehicleVarList(this.pageData.item);
+            }
+        }
+
+        function vueMounted() {
+            //this.workTimer();
+            this.managerIdOfSession();
+            this.vehicleVarList(this.pageData.item);
+            this.yearSelectBoxSetting();
+            this.countrySelectBox();
+            this.cList();
+        }
+
+    </script>
+</th:block>
+<th:block layout:fragment="scriptAfterCreateVue">
+</th:block>
+</html>

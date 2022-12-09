@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layouts/DefaultLayout">
+
+<th:block layout:fragment="css">
+    <style>
+        .box {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+        .box::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera*/
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="M_content" class="backgroundColor">
+    <header class="bg-dark py-5">
+        <div class="container"> <!--px-4 px-lg-5 my-5-->
+            <div class="text-center text-white">
+                <h1 class="display-4Second fw-bolder" id="top">충전 현황 조회</h1>
+                <span style="font-size: xx-large; color: burlywood">[ {{ pageData.connectDevice }} ]</span>
+            </div>
+        </div>
+    </header>
+
+    <template>
+        <template v-if="pageData.authorityCheck">
+            <div style="text-align: left; font-size: x-large; color: #6a1a21; position: absolute">
+                <el-button @click="goMainHome" class="buttonCss" style="margin-left: 10px; background-color: antiquewhite">
+                    <img src="/img/home.png" class="logoutCss">
+                </el-button>
+            </div>
+        </template>
+        <div style="text-align: right; font-size: x-large; color: #6a1a21;">
+            <img src="/img/manager.png" style="width: 43px; height: 40px; margin-right: 5px">
+            <span style="vertical-align: middle; margin-right: 10px">{{ pageData.managerDataOfSession }}</span>
+            <el-button @click="logout" class="buttonCss" style="margin-left: 10px; margin-right: 10px; background-color: antiquewhite">
+                <img src="/img/logout.png" class="logoutCss">
+            </el-button>
+        </div>
+        <hr style="margin-top: 0.2rem">
+        <div style="text-align: center">
+            <!-- ----------------- 등록된 진단기 리스트 ----------------- -->
+            <div class="table-contents-wrap">
+                <el-table :data="pageData.deviceList">
+                    <!--<el-table-column label="No." class-name="data-table-cell" label-class-name="data-table-header"
+                                     style="width:10%">
+                        <template slot-scope="scope">
+                            {{ pageData.count - ((pageData.searchData.pageNo - 1) * pageData.searchData.countPerPage) -
+                            scope.$index }}
+                        </template>
+                    </el-table-column>-->
+                    <el-table-column prop="ipAddress" label="Ip주소" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <el-table-column prop="macAddress" label="Mac주소" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <el-table-column prop="firmver" label="펌웨어" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <el-table-column label="상세지역" class-name="data-table-cell" label-class-name="data-table-header"
+                                     style="width:35%">
+                        <template slot-scope="scope">
+                            <el-link @click="detail(scope.row.detail)" style="color: #416DB0">{{ scope.row.detailAbb }} ...</el-link>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="상태" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                        <template slot-scope="scope">
+                            <template v-if="scope.row.status=='Testing'">
+                                <el-button @click="returnToTest(scope.row.locid, scope.row.macAddress)" style="color: #416DB0;border: 0;background-color: ghostwhite">ing<!--{{ scope.row.status }}--></el-button>
+                            </template>
+                            <template v-else>
+                                {{ scope.row.status }}
+                            </template>
+                        </template>
+                    </el-table-column>
+                    <!--<el-table-column prop="registDt" label="등록일자" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>-->
+                    <el-table-column label="연결" class-name="data-table-cell" label-class-name="data-table-header"
+                                     style="width:35%">
+                        <template slot-scope="scope">
+                            <template v-if="scope.row.action == 'Disconn'">
+                                <el-button type="danger" @click="action(scope.row.action, scope.row.locid, scope.row.status)" style="width: 60px">Dis<!--{{ scope.row.action }}--></el-button>
+                            </template>
+                            <template v-else>
+                                <el-button type="info" @click="action(scope.row.action, scope.row.locid, scope.row.status)" style="width: 60px; background-color: yellowgreen">Con<!--{{ scope.row.action }}--></el-button>
+                            </template>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="강제중지" class-name="data-table-cell" label-class-name="data-table-header"
+                                     style="width:35%">
+                        <template slot-scope="scope">
+                            <el-button type="warning" @click="stop(scope.row.locid)" style="width: 60px">ⓧ</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-pagination small layout="prev, pager, next" :total="pageData.count"
+                               :page-size="pageData.searchData.countPerPage" :current-page.sync="pageData.searchData.pageNo"
+                               @current-change="getList">
+                </el-pagination>
+            </div>
+
+            <!-- 진단기 지역 상세 팝업 -->
+            <div class="info-registration-title">
+                <el-dialog width="30%" :visible.sync="pageData.detailPopUp" :close-on-click-modal=false center>
+                    <h3>
+                        진단기<span> 상세 지역 설명</span>
+                    </h3>
+                    <div class="manager">
+                        <p style="padding: 70px 0px; font-size: x-large">{{ pageData.detailData }}</p>
+                    </div>
+                    <div slot="footer" class="dialog-footer" style="text-align:center">
+                        <el-button @click="pageData.detailPopUp=false, pageData.detailData=''" class="exit">닫기</el-button>
+                    </div>
+                </el-dialog>
+            </div>
+            <!--<div slot="footer" class="dialog-footer" style="text-align:center; margin-top: 10px">
+                <el-button @click="getCustomersList()" class="save">차량 선택</el-button>
+                &lt;!&ndash;<el-button @click="guest()" class="exit">게스트</el-button>&ndash;&gt;
+            </div>-->
+        </div>
+
+        <!-- ----------------- 고객 선택 팝업 ----------------- -->
+        <div class="info-registration-title">
+            <el-dialog class="el-customersPopUp" width="30%" :visible.sync="pageData.customersPopUp" :close-on-click-modal=false center>
+                <h3>
+                    차량 <span>리스트</span>
+                </h3>
+                <div class="manager">
+                    <div class="manager">
+                        <!--<div style="display: inline-block"> 제천용 검색 X
+                            <div style="display: inline-block">
+                                <el-input placeholder="name" v-model="pageData.searchName" style="display: inline-block" maxlength="50" show-word-limit></el-input>
+                            </div>
+                            <el-button @click="search()">검색</el-button>
+                        </div>-->
+
+                        <el-table :data="pageData.customersList">
+                            <el-table-column prop="customersName" label="이름" class-name="data-table-cell"
+                                             label-class-name="data-table-header" style="width:20%">
+                            </el-table-column>
+                            <!--<el-table-column prop="customersPhone" label="휴대폰" class-name="data-table-cell"
+                                             label-class-name="data-table-header" style="width:20%">
+                            </el-table-column>-->
+                            <!--<el-table-column prop="customersShowAddress" label="주소" class-name="data-table-cell"
+                                             label-class-name="data-table-header" style="width:20%">
+                            </el-table-column>-->
+                            <el-table-column prop="customersCarNumber" label="차량번호" class-name="data-table-cell"
+                                             label-class-name="data-table-header" style="width:20%">
+                            </el-table-column>
+                            <!--<el-table-column prop="customersCarMaker" label="제조사" class-name="data-table-cell"
+                                             label-class-name="data-table-header" style="width:20%">
+                            </el-table-column>-->
+                            <el-table-column prop="customersCarName" label="모델" class-name="data-table-cell"
+                                             label-class-name="data-table-header" style="width:20%">
+                            </el-table-column>
+                            <el-table-column prop="customersCarYear" label="연식" class-name="data-table-cell"
+                                             label-class-name="data-table-header" style="width:20%">
+                            </el-table-column>
+                            <!--<el-table-column prop="customersCarMileage" label="주행거리" class-name="data-table-cell"
+                                             label-class-name="data-table-header" style="width:20%">
+                            </el-table-column>
+                            <el-table-column prop="customersRegistDt" label="등록일자" class-name="data-table-cell"
+                                             label-class-name="data-table-header" style="width:20%">
+                            </el-table-column>-->
+                            <el-table-column label="선택" class-name="data-table-cell" label-class-name="data-table-header"
+                                             style="width:35%">
+                                <template slot-scope="scope">
+                                    <el-button type="info" @click="customerChoose(scope.row.cid, scope.row.carId)">Choose</el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                        <el-pagination small layout="prev, pager, next" :total="pageData.customersCount"
+                                       :page-size="pageData.customersSearchData.countPerPage" :current-page.sync="pageData.customersSearchData.pageNo"
+                                       @current-change="getCustomersList">
+                        </el-pagination>
+                    </div>
+                </div>
+                <div slot="footer" class="dialog-footer" style="text-align:center; margin-top: 10px">
+                    <el-button @click="pageData.customersPopUp=false, pageData.customersSearchData.pageNo=1" class="exit">닫기</el-button>
+                </div>
+            </el-dialog>
+        </div>
+    </template>
+</div>
+
+<th:block layout:fragment="scriptBeforeCreateVue">
+    <script>
+        let localData = {
+            managerDataOfSession: '', // 현재 세션의 관리자 아이디
+            deviceList: [], // 진단기 테이블 리스트
+            actionSwitch: [],
+            count: 0, // 진단기 테이블 페이징
+            detailPopUp: false, // 진단기 상세 지역 설명 팝업 ON|OFF 구분 변수
+            detailData: '', // 팝업에 노출할 진단기 상세 지역 설명 정보
+            searchData: {
+                pageNo: 1,
+                countPerPage: 10
+            },
+            resetSort: false, // 진단기 상태를 리셋할 때, 오류로 인한 리셋인지 Cancle 버튼으로 인한 리셋인지 구분
+
+            customersList: [], // 고객 팝업 테이블
+            customersCount: 0, // 고객 팝업 테이블 페이징
+            customersPopUp: false, // 진단기 선택 후 고객을 선택하는 팝업
+            customersSearchData: {
+                pageNo: 1,
+                countPerPage: 5,
+                searchName: '',
+                searchMaker: 'ALL',
+                searchModel: 'ALL'
+            },
+            searchName: '',
+            locidForStatusReset: 0,
+            connectDevice: '', // 현재 연결된 진단기 이름을 넣는 변수,
+            statusCheck: '',
+            authorityCheck: false
+        }
+
+        let localMethod = {
+            getList: function() { // 진단기 목록 테이블 가져오기
+                axiosGet("/api/system/device/list", { params: this.pageData.searchData },
+                    function (response) {
+                        vueApp.pageData.deviceList = response.data.list;
+                        vueApp.pageData.count = response.data.count;
+                        for(let count=0;count<vueApp.pageData.deviceList.length;count++) {
+                            let data = vueApp.pageData.deviceList[count].registDt;
+                            vueApp.pageData.deviceList[count].registDt = vueApp.dateFormat(data);
+                            if(vueApp.pageData.deviceList[count].action === 'Disconn' && vueApp.pageData.deviceList[count].managerId === vueApp.pageData.managerDataOfSession) {
+                                vueApp.pageData.locidForStatusReset = vueApp.pageData.deviceList[count].locid;
+                                vueApp.pageData.statusCheck = vueApp.pageData.deviceList[count].status;
+                                //vueApp.pageData.connectDevice = "tester-" + vueApp.pageData.deviceList[count].macAddress.slice(-2) + " Connected";
+                                vueApp.pageData.connectDevice = 'Charger Connected';
+                            }
+                        }
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            detail: function (detail) { // 진단기 상세 지역 설명, 팝업 열어 전체 문자열 보기
+                this.pageData.detailData = detail;
+                this.pageData.detailPopUp = true;
+                this.resetLeftTime();
+            },
+            action: function (action, locid, status) { // Connect | Disconn 선택 후 구분
+                if(action === 'Connect') { // 연결 시도라면,
+                    if(vueApp.pageData.locidForStatusReset != 0) { // 진단기 연결이 되어있는 상태에서 다른 진단기 연결 버튼 클릭
+                        axiosPost("/api/diagnosis/actionChange/"+locid+"/"+vueApp.pageData.managerDataOfSession+"/"+vueApp.pageData.locidForStatusReset, null, // 연결하려는 진단기의 locid를 세션에 저장
+                            function () {
+                                vueApp.pageData.locidForStatusReset = locid;
+                                vueApp.pageData.statusCheck = status;
+                                vueApp.nowConnectDevice();
+                            },
+                            function (error) {
+                                console.log(error.response);
+                                alert("error : " + error.response.data.errorMessages[0]);
+                            },
+                            commonNotifyError
+                        )
+                    } else { // 어떠한 진단기도 연결되어있지 않은 상태에서의 연결 시도
+                        axiosPost("/api/diagnosis/locidSaveForTestStart/"+locid+"/"+vueApp.pageData.managerDataOfSession, null, // 연결하려는 진단기의 locid를 세션에 저장
+                            function (response) {
+                                vueApp.pageData.locidForStatusReset = locid;
+                                vueApp.pageData.statusCheck = status;
+                                vueApp.nowConnectDevice();
+                            },
+                            function (error) {
+                                console.log(error.response);
+                                alert("error : " + error.response.data.errorMessages[0]);
+                            },
+                            commonNotifyError
+                        )
+                    }
+                } else { // 진단기 연결 해제 버튼 클릭
+                    //this.pageData.locidForStatusReset = locid;
+                    this.pageData.resetSort = true;
+                    this.pageData.statusCheck = '';
+                    this.resetDeviceStatus(locid);
+                }
+                this.resetLeftTime();
+            },
+            stop: function (locid) { // 진단기 강제 중지(최고 관리자 권한)
+                if(confirm("진단기의 상태 초기화 및 진행중인 진단을 강제로 중지하시겠습니까?") == true) {
+                    this.pageData.statusCheck = '';
+                    axiosPut("/api/diagnosis/stopDevice/"+locid, null,
+                        function () {
+                            vueApp.pageData.locidForStatusReset = 0;
+                            vueApp.nowConnectDevice();
+                        },
+                        function (error) {
+                            console.log(error.response);
+                            alert("error : " + error.response.data.errorMessages[0]);
+                        },
+                        commonNotifyError
+                    )
+                } else {
+                    return false;
+                }
+                this.resetLeftTime();
+            },
+            resetDeviceStatus: function (locid) { // 고객 테이블 생성에 실패 시, 팝업 닫을 시, 진단기 연결을 끊을 시, 진단기 상태를 다시 대기로 변경
+                axiosPut("/api/diagnosis/statusReset/"+locid+"/"+vueApp.pageData.managerDataOfSession, null,
+                    function () {
+                        vueApp.pageData.customersPopUp = false;
+                        vueApp.pageData.vehiclePopUp = false;
+                        if(vueApp.pageData.resetSort === true) {
+                            vueApp.pageData.resetSort = false;
+                        } else {
+                            alert("진단을 준비하는 동안 오류가 발생했습니다. 다시 시도하십시오.")
+                        }
+                        vueApp.pageData.locidForStatusReset = 0;
+                        vueApp.nowConnectDevice();
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+
+            /*=============================================================
+                                     고객 선택 단계
+            =============================================================*/
+            getCustomersList: function() { // 고객 목록 테이블 가져오기
+                if(this.pageData.connectDevice === 'Not Connected') {
+                    alert("먼저 진단기를 연결해주세요.");
+                } else if(this.pageData.statusCheck === 'Testing') {
+                    alert("이미 진단 진행중인 진단기입니다.")
+                } else {
+                    axiosGet("/api/system/customers/diagnosticCustomerInfo", { params: this.pageData.customersSearchData },
+                        function (response) {
+                            vueApp.pageData.customersList = response.data.list;
+                            for (let count=0;count<vueApp.pageData.customersList.length;count++) {
+                                let data = vueApp.pageData.customersList[count].customersRegistDt;
+                                vueApp.pageData.customersList[count].customersRegistDt = vueApp.dateFormat(data);
+                                vueApp.pageData.customersList[count].customersCarNumber = vueApp.pageData.customersList[count].customersCarNumber.slice(-4);
+                            }
+                            vueApp.pageData.customersCount = response.data.count;
+                            vueApp.pageData.customersPopUp = true;
+                        },
+                        function (error) {
+                            console.log(error.response);
+                            vueApp.resetDeviceStatus(vueApp.pageData.locidForStatusReset); // 테이블 생성 에러 발생 시 진단기 상태 초기화
+                        },
+                        commonNotifyError
+                    )
+                }
+                this.resetLeftTime();
+            },
+            search: function () {
+                this.pageData.customersSearchData.searchName = this.pageData.searchName;
+                this.getCustomersList();
+            },
+            /*guest: function () { // 고객 선택 없이 게스트 진행
+                if(this.pageData.connectDevice === 'Not Connected') {
+                    alert("먼저 진단기를 연결해주세요.");
+                } else if(vueApp.pageData.statusCheck === 'Testing'){
+                    alert("이미 진단 진행중인 진단기입니다.")
+                } else {
+                    location.replace("/view/mobileWeb/diagnosis/GuestTestStart?locid=0");
+                }
+                this.resetLeftTime();
+            },*/
+            customerChoose: function (cid, carId) { // 고객 선택 시 cid 세션에 저장
+                axiosPost("/api/diagnosis/cidSaveForTestStart/" + cid, null,
+                    function () {
+                        vueApp.pageData.customersPopUp = false;
+                        //vueApp.getVehicleList(cid);
+                        vueApp.vehicleChoose(carId);
+                    },
+                    function (error) {
+                        vueApp.resetDeviceStatus(vueApp.pageData.locidForStatusReset); // 고객 선택 에러 발생 시 진단기 상태 초기화
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            vehicleChoose: function (carId) { // carId를 기준으로 차량 정보를 세션에 저장 후 화면 이동
+                axiosPost("/api/diagnosis/vehicleDataSaveForTestStart/" + carId, null,
+                    function () {
+                        location.href = "/view/mobileWeb/diagnosis/DiagnosisStart?locid=0";
+                    },
+                    function (error) {
+                        vueApp.resetDeviceStatus(vueApp.pageData.locidForStatusReset); // 차량 선택 에러 발생 시 진단기 상태 초기화
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+
+
+            /*=============================================================
+                                      진단으로 돌아가기
+            =============================================================*/
+            returnToTest: function (locid, macAddress) {
+                if(this.pageData.connectDevice === 'Not Connected') {
+                    alert("먼저 진단기를 연결해주세요.");
+                    return false;
+                } else if(this.pageData.connectDevice.substring(7, 9) != macAddress.slice(-2)) {
+                    alert("다른 진단기와 연결되어있습니다.\n버튼에 해당하는 진단기와 연결 후 다시 시도해주세요.");
+                    return false;
+                } else {
+                    axiosGet("/api/diagnosis/returnForCustomerName/"+locid, null,
+                        function (response) {
+                            if(response.data == true) { // 게스트
+                                vueApp.guestReturn(locid);
+                            } else { // 게스트X
+                                vueApp.notGuestReturn(locid);
+                            }
+                        }
+                    )
+                }
+            },
+            guestReturn: function (locid) {
+                axiosGet("/api/diagnosis/guestReturnToTest/"+locid, null,
+                    function (response) {
+                        if(response.data == true) {
+                            location.href = "/view/mobileWeb/diagnosis/GuestTestStart?locid="+locid;
+                        }
+                    }
+                )
+            },
+            notGuestReturn: function (locid) {
+                axiosGet("/api/diagnosis/returnToTest/"+locid, null,
+                    function (response) {
+                        if(response.data == true) {
+                            location.href = "/view/mobileWeb/diagnosis/DiagnosisStart?locid="+locid;
+                        }
+                    }
+                )
+            },
+
+            // ------------------------- vueMounted -------------------------
+
+            managerIdOfSession: function () { // 화면 상단에 표시할 현재 로그인한 관리자 아이디 가져오기
+                axiosGet("/api/system/manager", null,
+                    function (response) {
+                        vueApp.pageData.managerDataOfSession = response.data;
+                        if(response.data=='root') {
+                            vueApp.pageData.authorityCheck = true;
+                        }
+                        vueApp.nowConnectDevice();
+                    }
+                )
+            },
+            nowConnectDevice: function () { // 화면 상단에 표시할 현재 연결된 진단기 정보 가져오기
+                axiosGet("/api/diagnosis/nowConnectDevice/"+vueApp.pageData.managerDataOfSession, null,
+                    function (response) {
+                        vueApp.pageData.connectDevice = response.data;
+                        if(vueApp.pageData.connectDevice === '충전기 none Connected') {
+                            vueApp.pageData.connectDevice = 'Not Connected';
+                        } else {
+                            vueApp.pageData.connectDevice = 'Charger Connected';
+                        }
+                        vueApp.getList();
+                    }
+                )
+            },
+
+        }
+        function vueMounted() {
+            //this.workTimer();
+            this.managerIdOfSession();
+        }
+
+    </script>
+</th:block>
+<th:block layout:fragment="scriptAfterCreateVue">
+</th:block>
+</html>

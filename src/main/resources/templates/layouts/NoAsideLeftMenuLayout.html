@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<head th:replace="layouts/fragments/DefaultConfig::M_configFragment"></head>
+
+<body>
+	<script th:inline="javascript">
+	/*<![CDATA[*/
+	
+	    let activeTopMenuIndex = /*[[${activeTopMenuIndex}]]*/ '';
+	    let activeLeftMenuIndex = /*[[${activeLeftMenuIndex}]]*/ '';
+	
+	/*]]>*/
+	</script>
+
+	<div id="vueApp">
+		<el-container>
+			<el-header>
+				<div th:replace="layouts/fragments/DefaultHeader::M_headerFragment"></div>
+			</el-header>
+			<el-main>
+				<div layout:fragment="M_content"></div>
+			</el-main>
+			<el-footer>
+				<div th:replace="layouts/fragments/DefaultFooter::M_footerFragment"></div>
+			</el-footer>
+		</el-container>
+	</div>
+
+	<!--<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+	<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+	<script src="https://unpkg.com/element-ui/lib/umd/locale/ko.js"></script>
+-->
+	<th:block layout:fragment="scriptBeforeCreateVue"></th:block>
+	
+	<script>
+		ELEMENT.locale(ELEMENT.lang.ko);
+		
+		let commonMethod = {
+				handleMenuItemClick(el) {
+					location.href = el;
+				}
+			};
+			
+		let pageMethod = Object.assign(commonMethod, localMethod);
+		
+		if (typeof vueCreated == 'undefined') {
+			vueCreated = null;
+		}
+		if (typeof vueMounted == 'undefined') {
+			vueMounted = null;
+		}
+
+		
+		Vue.component("qsol-page-title", {
+			props: ["title"],
+			template: "<div class='page-title'>{{ title }}</div>"
+		});
+		
+		let vueApp = new Vue({
+			el: '#vueApp',
+			data: {
+				pageData : localData,
+				errorMessage: '',
+				errorMessages: [],
+				activeTopMenuIndex: activeTopMenuIndex,
+				activeLeftMenuIndex: activeLeftMenuIndex,
+				isLeftMenuCollapse: true
+			},
+			methods : pageMethod,
+			create: vueCreated,
+			mounted: vueMounted
+		});
+		
+		
+		function axiosGet(url, data, success, failure) {
+			axios.get(url, data)
+				.then(success)
+				.catch (failure);
+		}
+		
+		function axiosPost(url, data, success, failure) {
+			axios.post(url, data)
+				.then(success)
+				.catch (failure);
+		}
+		
+		function axiosPut(url, data, success, failure) {
+			axios.put(url, data)
+				.then(success)
+				.catch (failure);
+		}
+		
+		function axiosDelete(url, data, success, failure) {
+			axios.delete(url, data)
+				.then(success)
+				.catch (failure);
+		}
+		
+	</script>
+	
+	<th:block layout:fragment="scriptAfterCreateVue"></th:block>
+	
+	
+</body>
+
+</html>

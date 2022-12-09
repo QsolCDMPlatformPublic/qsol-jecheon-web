@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layouts/DefaultLayout">
+
+<th:block layout:fragment="css">
+    <style>
+        /*.demo-progress .el-progress--line {
+            margin-bottom: 15px;
+            width: 350px;
+        }*/
+    </style>
+</th:block>
+
+<div layout:fragment="M_content" class="backgroundColor">
+    <header class="bg-dark py-5">
+        <div class="container"> <!--px-4 px-lg-5 my-5-->
+            <div class="text-center text-white">
+                <h1 class="display-4Second fw-bolder" id="top">충전</h1>
+                <span style="font-size: xx-large; color: burlywood">[ {{ pageData.connectDevice }} ]</span>
+            </div>
+        </div>
+    </header>
+
+    <template>
+        <div v-loading="pageData.loading">
+            <div style="text-align: left; font-size: x-large; color: #6a1a21; position: absolute">
+                <!--<template v-if="pageData.homeMoveCon">
+                    <el-button @click="dataSaveBeforeMoving()" class="buttonCss" style="margin-left: 10px; background-color: antiquewhite">
+                        <img src="/img/home.png" class="logoutCss">
+                    </el-button>
+                </template>
+                <template v-else>
+                    <el-button @click="noSaveMoving()" class="buttonCss" style="margin-left: 10px; background-color: antiquewhite">
+                        <img src="/img/home.png" class="logoutCss">
+                    </el-button>
+                </template>-->
+                <el-button @click="goHome()" class="buttonCss" style="margin-left: 10px; background-color: antiquewhite">
+                    <img src="/img/home.png" class="logoutCss">
+                </el-button>
+            </div>
+            <div style="text-align: right; font-size: x-large; color: #6a1a21;">
+                <img src="/img/manager.png" style="width: 43px; height: 40px; margin-right: 5px">
+                <span style="vertical-align: middle; margin-right: 10px">{{ pageData.managerDataOfSession }}</span>
+                <!--<el-button @click="logout" class="buttonCss" style="margin-left: 10px; margin-right: 10px; background-color: antiquewhite">
+                    <img src="/img/logout.png" class="logoutCss">
+                </el-button>-->
+            </div>
+            <div style="text-align: center">
+                <div class="info-registration-title2">
+                    <div class="diagnosisStart">
+
+                        <h3 style="position: absolute; margin-left: 10px; margin-top: 5px">
+                            차량 정보, <span>{{ pageData.dataList.vmlCodeNm }}</span>
+                        </h3>
+                        <hr style="margin-top: 0.2rem">
+                        <div>
+                            <div class="manager" style="display: inline-block">
+                                <el-form ref="form" :model="pageData.dataList" label-width="120px"><!-- style="overflow-y: auto;" class="box"-->
+                                    <p style="color: crimson; font-size: x-large">차량 정보</p>
+                                    <el-form-item label="차량번호" style="float: left; margin-right: 20px">
+                                        <el-input v-model="pageData.dataList.vehicleNo" maxlength="20" readonly="readonly" show-word-limit></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="제조사">
+                                        <el-input v-model="pageData.dataList.varCodeNm" maxlength="20" readonly="readonly" show-word-limit></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="모델" style="float: left; margin-right: 20px">
+                                        <el-input v-model="pageData.dataList.vmlCodeNm" maxlength="20" readonly="readonly" show-word-limit></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="연식">
+                                        <el-input v-model="pageData.dataList.carYear" maxlength="20" readonly="readonly" show-word-limit></el-input>
+                                    </el-form-item>
+                                    <!--<el-form-item label="주행거리" style="float: left"> 제천용 주행거리 표시 및 변경 X
+                                        <el-input type="text"
+                                                  oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');"
+                                                  v-model="pageData.dataList.mileage" maxlength="11" style="display: inline-block" show-word-limit>
+                                        </el-input>
+                                        <template v-if="pageData.mileageButton">
+                                            <el-button type="save" style="display: inline-block; margin-left: 20px; position: absolute" @click="mileageChange()">주행거리 변경</el-button>
+                                        </template>
+                                        <template v-else>
+                                            <el-button disabled="disabled" style="display: inline-block; margin-left: 20px; position: absolute" @click="mileageChange()">주행거리 변경</el-button>
+                                        </template>
+                                    </el-form-item>-->
+                                </el-form>
+                                <br>
+                            </div>
+                            <!--<div>&lt;!&ndash; style="display: inline-block"&ndash;&gt;
+                                <img id="vehicle" src="" style="width: 250px">&lt;!&ndash;margin-left: 30px; position: absolute; top:40%&ndash;&gt;
+                            </div>-->
+                        </div>
+                        <div class="manager">
+                            <el-form ref="form" :model="pageData.diagnosisData" label-width="120px"><!--style="overflow-y: auto;" class="box"-->
+                                <p style="color: crimson; font-size: x-large">충전</p>
+                                <div style="">
+                                    <el-form-item class="timeCss"><!--label="시작 시간" -->
+                                        <p style="color: black">시작 시간 : <span style="color: slateblue">{{ pageData.diagnosisData.startTime }}</span></p>
+                                    </el-form-item>
+                                    <el-form-item class="timeCss"><!--label="경과 시간"-->
+                                        <p style="color: black">경과 시간 : <span style="color: slateblue">{{ pageData.diagnosisData.elapsedTime }}</span></p>
+                                    </el-form-item>
+                                </div>
+                                <el-form-item label="State Of Charge" style="text-align: -webkit-center">
+                                    <template>
+                                        <el-progress
+                                                :text-inside="true"
+                                                :stroke-width="20"
+                                                :percentage="pageData.diagnosisData.progressPercentage"
+                                                status="exception"
+                                                style="width: 45%"
+                                        >
+                                            <span>Content</span>
+                                        </el-progress>
+                                    </template>
+                                </el-form-item>
+                                <template v-if="!pageData.reportSwitch">
+                                    <el-form-item label="메세지" style="text-align: -webkit-center; margin-top: 10px">
+                                        <p style="border: 2px solid black; padding: 10px; margin-bottom: 5px; width: 77%">{{ pageData.diagnosisData.message }} </p>
+                                    </el-form-item>
+                                </template>
+                            </el-form>
+                        </div>
+    <!--
+                        <div class="manager" style="margin-bottom: 5px">
+                            <el-form ref="form" :model="pageData.reportData" label-width="120px">&lt;!&ndash;style="overflow-y: auto;" class="box"&ndash;&gt;
+                                <template v-if="pageData.reportSwitch">
+                                    <p style="color: crimson; font-size: x-large">Report</p>
+                                    <div>
+                                        <div class="reportLayout">
+                                            <el-form-item label="Health">
+                                                <p style="color: green; font-size: xxx-large; margin-top: 5px">{{ pageData.reportData.soh }}</p>
+                                            </el-form-item>
+                                        </div>
+                                        <div class="reportLayout">
+                                            <el-form-item label="Rating">
+                                                <p style="color: royalblue; font-size: xxx-large; margin-top: 5px">{{ pageData.reportData.grade }}</p>
+                                            </el-form-item>
+                                        </div>
+                                        <div class="reportLayout">
+                                            <el-form-item label="Charged">
+                                                <p style="color: darkorange; font-size: xxx-large; margin-top: 5px">{{ pageData.reportData.soc }}</p>
+                                            </el-form-item>
+                                        </div>
+                                    </div>
+                                    <p style="font-size: small; padding: 10px">* Battery health is a measure of battery performance when the battery is in new condition.<br>
+                                    * Battery rating : S(>95%),  A(>90%),  B(>85%),  C(>80%),  D(80%>=)</p>
+                                </template>
+                            </el-form>
+                        </div>-->
+
+                        <div slot="footer" class="dialog-footer" style="text-align:center; margin-top: 10px">
+                            <!--충전 시작 전 : Start Diagnosis
+                            충전 시작 후 : Stop Diagnosis
+                            충전 종료 후 : Report-->
+                            <template v-if="pageData.buttonValue==0">
+                                <el-button @click="startDiagnosis()" class="save">충전 시작</el-button>
+                            </template>
+                            <template v-else-if="pageData.buttonValue==3 || pageData.buttonValue==5">
+                                <el-button @click="startDiagnosis()" disabled="disabled">충전 시작</el-button>
+                            </template>
+                            <template v-else-if="pageData.buttonValue==1">
+                                <el-button @click="stopDiagnosis()" class="save">충전 중지</el-button>
+                            </template>
+                            <!--<template v-else-if="pageData.buttonValue==2">
+                                <el-button @click="report()" class="save">Report</el-button>
+                            </template>-->
+                            <template v-else>
+                                <el-button @click="goHome()" class="save">돌아가기</el-button>
+                            </template>
+                            <!--<template v-if="pageData.reportSwitch">-->
+                            <template v-if="pageData.buttonValue==0 || pageData.buttonValue==5">
+                                <el-button @click="pageData.resetSort=true, resetDeviceStatus()" class="exit">충전 취소</el-button>
+                            </template>
+                            <template v-else>
+                                <el-button @click="pageData.resetSort=true, resetDeviceStatus()" disabled="disabled">충전 취소</el-button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
+<th:block layout:fragment="scriptBeforeCreateVue">
+    <script>
+        let basic = { // 충전 시작을 위한 진단기, 고객, 차량 정보
+            locid: 0,
+            customerId: 0,
+            managerId: '',
+            customerName: '',
+            vehicleNo: '',
+            varcd: '',
+            vmlcd: '',
+            varCodeNm: '',
+            vmlCodeNm: '',
+            carYear: '',
+            mileage: 0
+        }
+
+        let localData = {
+            loading: false,
+            managerDataOfSession: '', // 현재 세션의 관리자 아이디
+            dataList: [],
+            diagnosisData: { // 충전 시작 후 충전 중인 정보
+                startTime: '',
+                elapsedTime: '',
+                progressPercentage: 0, // 프로그레스바 퍼센테이지를 지정
+                message: '커넥터를 차량에 연결하고 "충전 시작"을 눌러주세요.'
+            },
+            resetSort: false, // 진단기 상태를 리셋할 때, 오류로 인한 리셋인지 Cancle 버튼으로 인한 리셋인지 구분
+            buttonValue: 0, // 충전 시작 전, 후, 충전 종료 후, 충전 시도를 구분
+
+            carImgSearchData: {},
+            imgName: '',
+
+            autoRun: false,
+            intervalId: '',
+            intervalSwitch: false,
+            communicationWaitingTime: 100, // UDP 전달 후 100초의 대기시간동안 데이터가 들어오는 것을 기다림
+            communicationWaitingTimeCheck: false, // 100초 이상 데이터가 수신되지 않으면 서버와의 통신오류를 발생
+            stepCd: '', // 충전 진행 상황
+            statusChange: false,
+            mileageButton: false,
+            homeMoveCon: false,
+
+            recallData: {},
+            reportSwitch: false,
+            reportData: {},
+            connectDevice: '',
+
+            startFirstStep: true // doha에서 충전이 시작된 후 test_data가 올라오기까지 소요되는 시간을 벌어줌
+        }
+
+        let localMethod = {
+/*
+            report: function () {
+                axiosGet("/api/diagnosis/report/"+vueApp.pageData.dataList.locid, null,
+                    function (response) {
+                        vueApp.pageData.reportData = response.data;
+                        vueApp.pageData.reportData.soc = vueApp.pageData.reportData.soc.toString().substring(0, 5) + '%';
+                        vueApp.pageData.reportData.soh = vueApp.pageData.reportData.soh.toString().substring(0, 5) + '%';
+                        vueApp.pageData.reportSwitch = true;
+                        vueApp.pageData.buttonValue = 4;
+                    }
+                )
+                this.resetLeftTime();
+            },
+
+*/
+            sessionData: function() { // 충전 시작을 위해 DeviceConnection에서 선택된 진단기, 고객, 차량 정보를 세션에서 가져와 리스트에 저장
+                this.pageData.mileageButton = true;
+                axiosGet("/api/diagnosis/customerDiagnosisData", null,
+                    function (response) {
+                        vueApp.pageData.dataList = response.data;
+                        vueApp.imgCall(); // 이미지 경로 설정
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            mileageChange: function () { // 주행 거리 업데이트 버튼
+                axiosPut("/api/diagnosis/mileageChange/"+ vueApp.pageData.dataList.customerId + "/" + vueApp.pageData.dataList.mileage + "/" + vueApp.pageData.dataList.vehicleNo, null,
+                    function () {
+                        vueApp.sessionData(); // 업데이트 후 데이터를 다시 가져옴
+                        alert("수정되었습니다.")
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            startDiagnosis: function () {
+                this.pageData.loading = true;
+                this.pageData.buttonValue = 3;
+                this.pageData.communicationWaitingTime = 100;
+                this.pageData.communicationWaitingTimeCheck = false;
+                this.pageData.statusChange = true;
+                this.pageData.mileageButton = false;
+                this.pageData.homeMoveCon = true;
+                this.pageData.intervalSwitch = true;
+                this.pageData.stepCd = 0;
+                axiosPost("/api/diagnosis/testStart", null,
+                    function () {
+                        vueApp.pageData.autoRun = true;
+                        vueApp.realTimeData();
+                    },
+                    function (error) {
+                        vueApp.pageData.loading = false;
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            realTimeData: function () {
+                if(this.pageData.autoRun === false) {
+                    this.pageData.loading = false;
+                    return false;
+                } else {
+                    vueApp.pageData.intervalId = setInterval(function () {
+                        vueApp.getRealTimeData();
+                    }, 5000) // 5초마다 갱신
+                }
+            },
+            getRealTimeData: function () {
+                if(this.pageData.intervalSwitch == true) {
+                    axiosGet("/api/diagnosis/startDtAndSocAndStepCd", null,
+                        function (response) {
+                            console.log("reload");
+                            console.log(response.data[0])
+                            vueApp.pageData.stepCd = response.data[0].stepCd;
+                            vueApp.pageData.diagnosisData.progressPercentage = response.data[0].soc;
+                            if(vueApp.pageData.communicationWaitingTimeCheck === true) { // 1번 체크 사항. 서버와의 통신 시간 초과 여부
+                                vueApp.pageData.loading = false;
+                                clearInterval(vueApp.pageData.intervalId);
+                                vueApp.pageData.intervalSwitch = false;
+                                vueApp.pageData.diagnosisData.message = "서버와의 통신 오류입니다. 다시 시도하십시오.";
+                                vueApp.pageData.buttonValue = 0;
+                                vueApp.pageData.mileageButton = true;
+                                vueApp.pageData.homeMoveCon = false;
+                                vueApp.pageData.autoRun = false;
+                                vueApp.pageData.mileageReadonlySwitch = false;
+                                axiosGet("/api/diagnosis/stopProcedureCall/"+vueApp.pageData.dataList.locid, null,
+                                    function () {
+                                        // sp_test_end 프로시저 호출 성공
+                                    }
+                                )
+                            } else {  // 1번 체크 사항. 서버와의 통신 시간 초과 여부
+                                switch (vueApp.pageData.stepCd) {
+                                    // doha_status_now table에서 해당 테스트의 testid로 데이터가 아직 올라오지 않았을 경우(null) stepCd를 999로 받아옴
+                                    case 999: // 2번 체크 사항. 케이블 연결 stepCd 가 DB에서 확인 되는가 (stepCd 2)
+                                        vueApp.pageData.diagnosisData.message = "케이블 연결을 확인중입니다. \n 남은 시간 : " + vueApp.pageData.communicationWaitingTime;
+                                        console.log(vueApp.pageData.stepCd)
+                                        console.log(vueApp.pageData.diagnosisData.message)
+                                        vueApp.pageData.communicationWaitingTime -= 5;
+                                        if (vueApp.pageData.communicationWaitingTime <= 0) {
+                                            vueApp.pageData.communicationWaitingTimeCheck = true;
+                                        }
+                                        break;
+                                    case 2: // 3번 체크 사항. 케이블 연결 확인 (stepCd 2) 후 stepCd 3으로 넘어가는 과정 (케이블과 차량의 연결을 확인하였으며, 진단기에서 진단을 위해 연결을 마무리하는 과정)
+                                        vueApp.pageData.diagnosisData.message = "케이블 연결이 확인되었습니다. 충전 시작을 위해 차량과 통신 중입니다. 잠시만 기다려주세요. \n 남은 시간 : " + vueApp.pageData.communicationWaitingTime;
+                                        // 케이블 연결이 확인되었습니다. 진단 시작을 위해 차량과 통신 중입니다. 잠시만 기다려주세요.
+                                        console.log(vueApp.pageData.stepCd)
+                                        console.log(vueApp.pageData.diagnosisData.message)
+                                        vueApp.pageData.communicationWaitingTime -= 5;
+                                        if (vueApp.pageData.communicationWaitingTime <= 0) {
+                                            vueApp.pageData.communicationWaitingTimeCheck = true;
+                                        }
+                                        break;
+                                    case 3: // 4번 체크 사항. 진단 시작 (케이블과 차량의 연결이 최종 완료되었으며 진단이 시작됨)
+                                        if(vueApp.pageData.startFirstStep === true) {
+                                            vueApp.pageData.diagnosisData.message = "통신이 성공적으로 완료되었습니다. 잠시 후 충전이 시작됩니다.";
+                                            // 통신이 성공적으로 완료되었습니다. 잠시 후 진단이 시작됩니다.
+                                            console.log(vueApp.pageData.stepCd)
+                                            console.log(vueApp.pageData.diagnosisData.message)
+                                            setTimeout(function (){ // 진단이 시작된 후 tb_test_data에 데이터가 올라오는 시간을 벌어줌 (5s)
+                                                vueApp.pageData.loading = false;
+                                                vueApp.pageData.startFirstStep = false;
+                                            }, 5000);
+                                        }
+                                        vueApp.pageData.diagnosisData.message = "충전이 진행 중입니다.";
+                                        console.log(vueApp.pageData.stepCd)
+                                        console.log(vueApp.pageData.diagnosisData.message)
+                                        if(vueApp.pageData.statusChange === true) {
+                                            axiosPost("/api/system/device/statusTestingChange/"+vueApp.pageData.dataList.locid, null,
+                                                function () {
+                                                    vueApp.pageData.statusChange = false;
+                                                }
+                                            )
+                                        }
+                                        vueApp.pageData.loading = false;
+                                        vueApp.pageData.buttonValue = 1;
+                                        vueApp.pageData.diagnosisData.startTime = response.data[0].startDt;
+                                        let data = vueApp.pageData.diagnosisData.startTime;
+                                        vueApp.pageData.diagnosisData.startTime = vueApp.dateFormat(data);
+                                        vueApp.pageData.diagnosisData.elapsedTime = vueApp.elapsedTimeGet(data);
+                                        break;
+                                    case 4: // 5번 체크 사항. 진단 종료
+                                        vueApp.pageData.loading = false;
+                                        vueApp.pageData.autoRun = false;
+                                        clearInterval(vueApp.pageData.intervalId);
+                                        vueApp.pageData.intervalSwitch = false;
+                                        vueApp.pageData.diagnosisData.message = "충전이 완료되었습니다.\n[충전 중지] 버튼을 클릭해주세요.";
+                                        console.log(vueApp.pageData.stepCd)
+                                        console.log(vueApp.pageData.diagnosisData.message)
+                                        vueApp.pageData.buttonValue = 1;
+                                        vueApp.pageData.mileageButton = true;
+                                        vueApp.pageData.homeMoveCon = false;
+                                        vueApp.stopDiagnosis();
+                                        vueApp.pageData.stepCd = 0;
+                                        break;
+                                    case 255: // 6번 체크 사항. doha 장비에서 에러 출력. (case2의 과정에서 에러가 발생)
+                                        vueApp.pageData.loading = false;
+                                        vueApp.pageData.diagnosisData.message = "진단 시작 시 또는 진단 중에 오류가 발생했습니다.\n[취소] 버튼을 클릭하고 다시 시도하십시오.";
+                                        console.log(vueApp.pageData.stepCd)
+                                        console.log(vueApp.pageData.diagnosisData.message)
+                                        vueApp.pageData.autoRun = false;
+                                        clearInterval(vueApp.pageData.intervalId);
+                                        vueApp.pageData.buttonValue = 5;
+                                        vueApp.pageData.intervalSwitch = false;
+                                        vueApp.pageData.mileageButton = true;
+                                        vueApp.pageData.homeMoveCon = false;
+                                        vueApp.pageData.mileageReadonlySwitch = false;
+                                        axiosGet("/api/diagnosis/stopProcedureCall/"+vueApp.pageData.dataList.locid, null,
+                                            function () {
+                                                console.log("sp_test_end 프로시저 호출 성공")
+                                            }
+                                        )
+                                        break;
+                                }
+                            }
+                        },
+                        function (error) { // 위의 전체 과정에서 error 가 발생
+                            vueApp.pageData.loading = false;
+                            console.log(error.response);
+                            vueApp.pageData.diagnosisData.message = "진단 시작 시 또는 진단 중에 오류가 발생했습니다.\n[취소] 버튼을 클릭하고 다시 시도하십시오.";
+                            vueApp.pageData.autoRun = false;
+                            clearInterval(vueApp.pageData.intervalId);
+                            vueApp.pageData.buttonValue = 5;
+                            vueApp.pageData.intervalSwitch = false;
+                            vueApp.pageData.mileageButton = true;
+                            vueApp.pageData.homeMoveCon = false;
+                            vueApp.pageData.mileageReadonlySwitch = false;
+                            axiosGet("/api/diagnosis/stopProcedureCall/" + vueApp.pageData.dataList.locid, null,
+                                function () {
+                                    console.log("sp_test_end 프로시저 호출 성공")
+                                }
+                            )
+                        },
+                        commonNotifyError
+                    )
+                } else {
+                    this.pageData.loading = false;
+                }
+                this.resetLeftTime();
+            },
+            elapsedTimeGet: function (data) {
+                // 시작 시간
+                let start = new Date(data);
+                let sh = start.getHours();
+                let sm = start.getMinutes();
+                let ss = start.getSeconds();
+
+                // 현재 시간
+                let now = new Date();
+                let nh = now.getHours();
+                let nm = now.getMinutes();
+                let ns = now.getSeconds();
+
+                // hour 계산 ━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+                let result_H = nh - sh;
+                if(nm < sm) {
+                    result_H -= 1;
+                }
+                if(Math.sign(result_H) === -1) {
+                    result_H += 24;
+                }
+                if(result_H < 10) {
+                    result_H = "0"+result_H;
+                }
+                //━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+                // Minutes 계산 ━━━━━━━━━━━━━━━━━━━━━━━┓
+                let result_M = nm - sm;
+                if(ns < ss) {
+                    result_M -= 1;
+                }
+                if(Math.sign(result_M) === -1) {
+                    result_M += 60;
+                }
+                if(result_M < 10) {
+                    result_M = "0"+result_M;
+                }
+                //━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+                // Seconds 계산 ━━━━━━━━━━━━━━━━━━━━━━━┓
+                let result_S = ns - ss;
+
+                if(Math.sign(result_S) === -1) {
+                    result_S += 60;
+                }
+                if(result_S < 10) {
+                    result_S = "0"+result_S;
+                }
+                //━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+                return result_H + " : " + result_M + " : " + result_S;
+            },
+
+            stopDiagnosis: function () { // 충전 강제 종료 버튼
+                this.pageData.loading = true;
+                this.pageData.autoRun = false;
+                clearInterval(vueApp.pageData.intervalId);
+                this.pageData.intervalSwitch = false;
+                setTimeout(function (){ // 남아있는 인터벌이 끝날 때까지 (어느정도) 대기한 후 종료 진행
+                    axiosPost("/api/diagnosis/testStop/"+vueApp.pageData.dataList.locid, null,
+                        function () {
+                            vueApp.pageData.diagnosisData.message = "커넥터를 분리해주세요.\n[돌아가기] 버튼을 클릭해주세요.";
+                            vueApp.pageData.mileageButton = true;
+                            vueApp.pageData.homeMoveCon = false;
+                            vueApp.pageData.buttonValue = 4; // 캐나다와 다르게 충전 종료 시 Report(2) 버튼이 아닌 첫 화면으로 돌아가는(4) 버튼으로 변경
+                            vueApp.pageData.loading = false;
+                        }
+                    )
+                }, 5000);
+                this.resetLeftTime();
+            },
+
+
+            /*=============================================================
+                         충전 진행 중에 홈화면으로 이동시, 데이터 저장
+            =============================================================*/
+            /*dataSaveBeforeMoving: function () {
+                axiosGet("/api/diagnosis/dataSaveBeforeMoving", null,
+                    function () {
+                        if(vueApp.pageData.managerDataOfSession === 'root') {
+                            location.href = "/view/mobileWeb/home/Home";
+                        } else {
+                            location.href = "/view/mobileWeb/diagnosis/StaffDeviceConnection";
+                        }
+                    }
+                )
+            },
+            noSaveMoving: function () {
+                if(this.pageData.managerDataOfSession === 'root') {
+                    location.href = "/view/mobileWeb/home/Home";
+                } else {
+                    location.href = "/view/mobileWeb/diagnosis/StaffDeviceConnection";
+                }
+            },*/
+            goHome: function () {
+                if(this.pageData.managerDataOfSession === 'root') {
+                    location.href = "/view/mobileWeb/home/Home";
+                } else {
+                    location.href = "/view/mobileWeb/diagnosis/StaffDeviceConnection?item=0";
+                }
+            },
+
+
+
+            /*=============================================================
+                                   진단기 상태 초기화
+            =============================================================*/
+            resetDeviceStatus: function () { // 고객 테이블 생성에 실패 시, 혹은 팝업 닫을 시 진단기 상태를 다시 대기로 변경
+                if(this.pageData.resetSort === true) {
+                    alert("충전을 취소합니다.");/*선택한 진단기가 Standby 상태로 돌아갑니다.**/
+                } else {
+                    alert("충전을 준비하는 동안 오류가 발생했습니다. 다시 시도해주세요.")
+                }
+                this.pageData.dataList = Object.assign({}, basic); // 세션 데이터를 저장하는 변수 초기화
+                if(this.pageData.managerDataOfSession === 'root') {
+                    location.href = "/view/mobileWeb/home/Home";
+                } else {
+                    location.href = "/view/mobileWeb/diagnosis/StaffDeviceConnection?item=0";
+                }
+                // 제천용은 충전 취소시에도 진단기 연결을 해제하지 않음
+                /*axiosPut("/api/diagnosis/statusReset/" + vueApp.pageData.dataList.locid+"/"+vueApp.pageData.managerDataOfSession, null,
+                    function () {
+                        if(vueApp.pageData.resetSort === true) {
+                            alert("충전을 취소합니다.");/!*선택한 진단기가 Standby 상태로 돌아갑니다.*!/
+                        } else {
+                            alert("충전을 준비하는 동안 오류가 발생했습니다. 다시 시도해주세요.")
+                        }
+                        vueApp.pageData.dataList = Object.assign({}, basic); // 세션 데이터를 저장하는 변수 초기화
+                        if(vueApp.pageData.managerDataOfSession === 'root') {
+                            location.replace("/view/mobileWeb/diagnosis/DeviceConnection");
+                        } else {
+                            location.replace("/view/mobileWeb/diagnosis/StaffDeviceConnection");
+                        }
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )*/
+                this.resetLeftTime();
+            },
+
+            /*=============================================================
+                                      이미지 경로 설정
+            =============================================================*/
+            imgCall: function () {
+                this.pageData.carImgSearchData.varcd = this.pageData.dataList.varcd;
+                this.pageData.carImgSearchData.vmlcd = this.pageData.dataList.vmlcd;
+                axiosPost("/api/image/imgCall", vueApp.pageData.carImgSearchData,
+                    function (response) {
+                        vueApp.pageData.imgName = response.data;
+                        vueApp.vehicleImg();
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0])
+                    },
+                    commonNotifyError
+                )
+                this.resetLeftTime();
+            },
+            vehicleImg: function () { // <img>의 아이디 호출
+                document.getElementById('vehicle').src=vueApp.vehicle_info();
+            },
+            vehicle_info: function () { // src경로 설정을 위한 함수 호출
+                let imgName;
+                if(this.pageData.imgName != '') {
+                    imgName = this.pageData.imgName;
+                } else {
+                    imgName = 'Default.png';
+                }
+
+                let img_src = '/img/vehicle/' + imgName;
+                return img_src;
+            },
+
+            // ------------------------- vueMounted -------------------------
+
+            managerIdOfSession: function () { // 화면에 보여줄 관리자 아이디 가져오기
+                axiosGet("/api/system/manager", null,
+                    function (response) {
+                        vueApp.pageData.managerDataOfSession = response.data;
+                    }
+                )
+            },
+
+            nowConnectDevice: function () { // 화면 상단에 표시할 현재 연결된 진단기 정보 가져오기
+                axiosGet("/api/diagnosis/testStartPageConnectDevice", null,
+                    function (response) {
+                        vueApp.pageData.connectDevice = response.data;
+                    }
+                )
+            },
+
+            recallData: function (locid) { // 이전에 실행해둔 충전으로 돌아왔을 시
+                this.pageData.loading = true;
+                this.pageData.buttonValue = 3;
+                this.pageData.mileageButton = false;
+                this.pageData.homeMoveCon = true;
+                this.pageData.communicationWaitingTime = 100;
+                this.pageData.communicationWaitingTimeCheck = false;
+                this.pageData.statusChange = true;
+                axiosGet("/api/diagnosis/recallData/"+locid, null,
+                    function (response) {
+                        vueApp.pageData.dataList = response.data;
+                        //vueApp.imgCall(); // 이미지 경로 설정
+                        vueApp.pageData.autoRun = true;
+                        vueApp.pageData.intervalSwitch = true;
+                        vueApp.getRealTimeData();
+                        vueApp.realTimeData();
+
+                    }
+                )
+            }
+
+        }
+        function vueMounted() {
+            //this.workTimer();
+            this.managerIdOfSession();
+            this.nowConnectDevice();
+            /*URL 파라미터 가져오기*/
+            let query = window.location.search;
+            let param = new URLSearchParams(query);
+            let locid = param.get('locid');
+            if(locid != 0){
+                this.recallData(locid);
+            } else {
+                this.sessionData();
+            }
+        }
+
+        history.pushState(null, null, location.href);
+        window.onpopstate = function () {
+            history.go(1);
+            alert("충전 시작창에서는 [뒤로가기] 실행 불가.\n상단의 [홈] 버튼을 사용해주세요.")
+        };
+    </script>
+</th:block>
+<th:block layout:fragment="scriptAfterCreateVue">
+</th:block>
+</html>
+

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layouts/DefaultLayout">
+
+<th:block layout:fragment="css">
+    <style>
+        .box {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+        .box::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera*/
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="M_content" class="backgroundColor">
+    <header class="bg-dark py-5">
+        <div class="container"> <!--px-4 px-lg-5 my-5-->
+            <div class="text-center text-white">
+                <h1 class="display-4 fw-bolder" id="top">충전기 관리</h1>
+            </div>
+        </div>
+    </header>
+
+    <template>
+        <div style="text-align: left; font-size: x-large; color: #6a1a21; position: absolute">
+            <el-button @click="goMainHome" class="buttonCss" style="margin-left: 10px; background-color: antiquewhite">
+                <img src="/img/home.png" class="logoutCss">
+            </el-button>
+        </div>
+        <div style="text-align: right; font-size: x-large; color: #6a1a21;">
+            <img src="/img/manager.png" style="width: 43px; height: 40px; margin-right: 5px">
+            <span style="vertical-align: middle; margin-right: 10px">{{ pageData.managerDataOfSession }}</span>
+            <el-button @click="logout" class="buttonCss" style="margin-left: 10px; margin-right: 10px; background-color: antiquewhite">
+                <img src="/img/logout.png" class="logoutCss">
+            </el-button>
+        </div>
+        <hr style="margin-top: 0.2rem">
+        <div style="text-align: center">
+            <!--등록된 진단기 리스트-->
+            <div class="table-contents-wrap">
+                <el-table :data="pageData.deviceList">
+                    <!--<el-table-column label="No." class-name="data-table-cell" label-class-name="data-table-header"
+                                     style="width:10%">
+                        <template slot-scope="scope">
+                            {{ pageData.count - ((pageData.searchData.pageNo - 1) * pageData.searchData.countPerPage) -
+                            scope.$index }}
+                        </template>
+                    </el-table-column>-->
+                    <el-table-column prop="ipAddress" label="Ip주소" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <el-table-column prop="macAddress" label="Mac주소" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <el-table-column prop="firmver" label="펌웨어 버전" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <el-table-column label="상세지역" class-name="data-table-cell" label-class-name="data-table-header"
+                                     style="width:35%">
+                        <template slot-scope="scope">
+                            <el-link @click="detail(scope.row.detail)" style="color: #416DB0">{{ scope.row.detailAbb }} ...</el-link>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="status" label="상태" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                    <el-table-column prop="registDt" label="등록일시" class-name="data-table-cell"
+                                     label-class-name="data-table-header" style="width:20%">
+                    </el-table-column>
+                </el-table>
+                <el-pagination small layout="prev, pager, next" :total="pageData.count"
+                               :page-size="pageData.searchData.countPerPage" :current-page.sync="pageData.searchData.pageNo"
+                               @current-change="dList">
+                </el-pagination>
+            </div>
+
+            <div class="info-registration-title">
+                <el-dialog width="30%" :visible.sync="pageData.detailPopUp" :close-on-click-modal=false center>
+                    <h3>
+                        진단기<span> 상세 지역 설명</span>
+                    </h3>
+                    <div class="manager">
+                        <p style="padding: 70px 0px; font-size: x-large">{{ pageData.detailData }}</p>
+                    </div>
+                    <div slot="footer" class="dialog-footer" style="text-align:center">
+                        <el-button @click="pageData.detailPopUp=false, pageData.detailData=''" class="exit">닫기</el-button>
+                    </div>
+                </el-dialog>
+            </div>
+        </div>
+
+    </template>
+</div>
+
+<th:block layout:fragment="scriptBeforeCreateVue">
+    <script>
+        let localData = {
+            managerDataOfSession: '', // 현재 세션의 관리자 아이디
+            deviceList: [], // 진단기 테이블 리스트
+            count: 0, // 진단기 테이블 페이징
+            searchData: {
+                pageNo: 1,
+                countPerPage: 4,
+            },
+            detailPopUp: false, // 진단기 상세 지역 설명 팝업 ON|OFF 구분 변수
+            detailData: '' // 팝업에 노출할 진단기 상세 지역 설명 정보
+        }
+
+        let localMethod = {
+            dList: function() { // 진단기 목록 테이블 가져오기
+                axiosGet("/api/system/device/list", { params: this.pageData.searchData },
+                    function (response) {
+                        vueApp.pageData.deviceList = response.data.list;
+                        for(let count=0;count<vueApp.pageData.deviceList.length;count++) {
+                            let data = vueApp.pageData.deviceList[count].registDt;
+                            vueApp.pageData.deviceList[count].registDt = vueApp.dateFormat(data);
+                        }
+                        vueApp.pageData.count = response.data.count;
+                    },
+                    function (error) {
+                        console.log(error.response);
+                        alert("error : " + error.response.data.errorMessages[0]);
+                    },
+                    commonNotifyError
+                )
+            },
+            detail: function (detail) { // 진단기 상세 지역 설명, 팝업 열어 전체 문자열 보기
+                this.pageData.detailData = detail;
+                this.pageData.detailPopUp = true;
+                this.resetLeftTime();
+            },
+            // ------------------------- vueMounted -------------------------
+
+            managerIdOfSession: function () {
+                axiosGet("/api/system/manager", null,
+                    function (response) {
+                        vueApp.pageData.managerDataOfSession = response.data;
+                    }
+                )
+            },
+
+        }
+        function vueMounted() {
+            //this.workTimer();
+            this.managerIdOfSession();
+            this.dList();
+        }
+
+    </script>
+</th:block>
+<th:block layout:fragment="scriptAfterCreateVue">
+</th:block>
+</html>
